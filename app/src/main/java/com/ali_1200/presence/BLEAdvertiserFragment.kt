@@ -3,6 +3,12 @@ package com.ali_1200.presence
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattServer
+import android.bluetooth.BluetoothGattServerCallback
+import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
@@ -28,13 +34,14 @@ class BLEAdvertiserFragment : Fragment() {
     lateinit var binding: BleadvertiserfragmentBinding
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
+    private var gattServer: BluetoothGattServer? = null
     private var advertiser: BluetoothLeAdvertiser? = null
     private val SERVICE_UUID: UUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
-        binding = BleadvertiserfragmentBinding.inflate(layoutInflater,container,false)
+        binding = BleadvertiserfragmentBinding.inflate(layoutInflater, container, false)
 
         return binding.root
     }
@@ -42,24 +49,37 @@ class BLEAdvertiserFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
 
-        bluetoothManager = requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothManager =
+            requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
+
         advertiser = bluetoothAdapter.bluetoothLeAdvertiser
 
-        val btnStart =  binding.start
+        val btnStart = binding.start
         val btnStop = binding.stop
 
         btnStart.setOnClickListener {
             checkPermissionsAndStartAdvertising()
-            startAdvertising() }
+            startAdvertising()
+        }
         btnStop.setOnClickListener { stopAdvertising() }
     }
 
     private fun checkPermissionsAndStartAdvertising() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // اندروید ۱۲ به بعد
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_ADVERTISE
+                ) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_SCAN
+                ) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
 
                 ActivityCompat.requestPermissions(
                     requireActivity(),
@@ -81,14 +101,14 @@ class BLEAdvertiserFragment : Fragment() {
     private fun startAdvertising() {
         if (advertiser == null || !bluetoothAdapter.isEnabled) {
             Log.e("BLEAdvertiser", "بلوتوث خاموش است یا پشتیبانی نمی‌شود")
-            Toast.makeText(requireContext(),"بلوتوث خاموش است",Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "بلوتوث خاموش است", Toast.LENGTH_LONG).show()
             return
         }
 
         val settings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
-            .setConnectable(false)
+            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+            .setConnectable(true)
             .build()
 
         val data = AdvertiseData.Builder()
@@ -108,13 +128,79 @@ class BLEAdvertiserFragment : Fragment() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
             super.onStartSuccess(settingsInEffect)
             Log.d("BLEAdvertiser", "تبلیغات BLE با موفقیت شروع شد")
-            Toast.makeText(requireContext(),"تبلیغات BLE با موفقیت شروع شد", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "تبلیغات BLE با موفقیت شروع شد", Toast.LENGTH_LONG)
+                .show()
+            startGattServer()
         }
 
         override fun onStartFailure(errorCode: Int) {
             super.onStartFailure(errorCode)
             Log.e("BLEAdvertiser", "خطا در شروع تبلیغات BLE: $errorCode")
-            Toast.makeText(requireContext(),"خطا در شروع تبلیغات BLE: $errorCode",Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                "خطا در شروع تبلیغات BLE: $errorCode",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startGattServer() {
+        gattServer = bluetoothManager.openGattServer(requireContext(), gattServerCallback)
+        if (gattServer == null) {
+            Log.e("GATTServer", "راه‌اندازی GATT Server با خطا مواجه شد")
+            return
+        }
+
+        val service = BluetoothGattService(SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
+        val characteristic = BluetoothGattCharacteristic(
+            UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB"),
+            BluetoothGattCharacteristic.PROPERTY_WRITE,
+            BluetoothGattCharacteristic.PERMISSION_WRITE
+        )
+
+        service.addCharacteristic(characteristic)
+        gattServer?.addService(service)
+        Log.d("GATTServer", "GATT Server با موفقیت شروع شد")
+    }
+
+    private val gattServerCallback = object : BluetoothGattServerCallback() {
+        @SuppressLint("MissingPermission")
+        override fun onCharacteristicWriteRequest(
+            device: BluetoothDevice?,
+            requestId: Int,
+            characteristic: BluetoothGattCharacteristic?,
+            preparedWrite: Boolean,
+            responseNeeded: Boolean,
+            offset: Int,
+            value: ByteArray?
+        ) {
+            val receivedData = value?.toString(Charsets.UTF_8)
+            Log.d("GATTServer", "داده دریافت شد: $receivedData")
+
+            // پردازش داده‌ها
+            if (receivedData != null) {
+                saveReceivedData(receivedData)
+            }
+
+            gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+
+        }
+    }
+
+    private fun saveReceivedData(data: String) {
+        val parts = data.split(",")
+        if (parts.size == 3) {
+            val studentName = parts[0]
+            val studentId = parts[1]
+            val androidId = parts[2]
+
+            Log.d(
+                "GATTServer",
+                "📝 دانشجو: $studentName | کد دانشجویی: $studentId | Android ID: $androidId"
+            )
+            Log.v("GATTServer", data)
+            // TODO: ذخیره در دیتابیس یا نمایش در UI
         }
     }
 }
