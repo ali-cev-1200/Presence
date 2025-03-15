@@ -30,6 +30,7 @@ import java.util.*
 
 class BLEScannerFragment : Fragment() {
     lateinit var binding: FragStudentBinding
+    lateinit var loginViewModel: LoginRepository
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var dataAlreadySent = false
@@ -56,6 +57,7 @@ class BLEScannerFragment : Fragment() {
         dataAlreadySent = false
         val btnStartScan = binding.start
         val txtScanResult = binding.result
+        loginViewModel = LoginRepository(requireContext())
 
         btnStartScan.setOnClickListener {
             checkPermissionsAndStartScan(txtScanResult)
@@ -63,32 +65,58 @@ class BLEScannerFragment : Fragment() {
     }
 
     private fun checkPermissionsAndStartScan(txtScanResult: TextView) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val permissionsToRequest = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // اندروید 12 به بالا
             if (ActivityCompat.checkSelfPermission(
                     requireContext(),
                     Manifest.permission.BLUETOOTH_SCAN
-                ) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    arrayOf(
-                        Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH_CONNECT,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ),
-                    1002
-                )
-                return
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_SCAN)
+            }
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+        } else { // اندروید 11 و پایین‌تر
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH)
+            }
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_ADMIN
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADMIN)
             }
         }
+
+        // موقعیت مکانی برای هر دو نسخه اندروید لازم است
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                requireActivity(),
+                permissionsToRequest.toTypedArray(),
+                1002
+            )
+            return
+        }
+
         startScan(txtScanResult)
     }
 
@@ -141,31 +169,61 @@ class BLEScannerFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun connectToGattServer(device: BluetoothDevice) {
+        // بررسی مجوز با توجه به نسخه اندروید
+        val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.BLUETOOTH
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+
+        if (!permissionGranted) {
+            Log.d("dataas", "مجوز بلوتوث داده نشده است")
+            Toast.makeText(requireContext(), "لطفاً مجوز بلوتوث را فعال کنید", Toast.LENGTH_LONG).show()
+            return
+        }
+
         bluetoothGatt = device.connectGatt(requireContext(), false, gattCallback)
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            Log.d("GATTClient", "onConnectionStateChange: status=$status, newState=$newState")
+            Log.d("dataas", "onConnectionStateChange: status=$status, newState=$newState")
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    Log.d("GATTClient", "متصل شد به GATT Server")
-                    if (ActivityCompat.checkSelfPermission(
+                    Log.d("dataas", "متصل شد به GATT Server")
+
+                    // بررسی مجوز با توجه به نسخه اندروید
+                    val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        ActivityCompat.checkSelfPermission(
                             requireContext(),
                             Manifest.permission.BLUETOOTH_CONNECT
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        Log.d("GATTClient", "permigen")
+                        ) == PackageManager.PERMISSION_GRANTED
+                    } else {
+                        ActivityCompat.checkSelfPermission(
+                            requireContext(),
+                            Manifest.permission.BLUETOOTH
+                        ) == PackageManager.PERMISSION_GRANTED
+                    }
+
+                    if (!permissionGranted) {
+                        Log.d("dataas", "مجوز بلوتوث داده نشده است")
                         return
                     }
+
                     gatt.discoverServices()
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    Log.d("GATTClient", "اتصال قطع شد")
+                    Log.d("dataas", "اتصال قطع شد")
                     gatt.close()
                 }
             } else {
-                Log.e("GATTClient", "خطا در اتصال: $status")
+                Log.e("dataas", "خطا در اتصال: $status")
                 disconnectGattServer()
             }
         }
@@ -182,7 +240,7 @@ class BLEScannerFragment : Fragment() {
                         dataAlreadySent = true // تنظیم وضعیت به ارسال شده
                     } else {
                         Log.d(
-                            "GATTClient",
+                            "dataas",
                             "داده قبلاً ارسال شده است، از ارسال مجدد خودداری می‌شود"
                         )
                         // پس از اینکه دیگر نیازی به اتصال نیست، آن را قطع کنید
@@ -194,32 +252,69 @@ class BLEScannerFragment : Fragment() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendAttendanceData(
-        gatt: BluetoothGatt,
-        characteristic: BluetoothGattCharacteristic
-    ) {
-        val studentData = "Ali,123456,Android123".toByteArray(Charsets.UTF_8) // نمونه اطلاعات
-        characteristic.value = studentData
-        gatt.writeCharacteristic(characteristic)
-        Log.d("GATTClient", "داده حضور ارسال شد: ${String(studentData)}")
+    private fun sendAttendanceData(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        // بررسی مجوز با توجه به نسخه اندروید
+        val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.BLUETOOTH
+            ) == PackageManager.PERMISSION_GRANTED
+        }
 
-        // پس از ارسال، اتصال را با تأخیر قطع کنید
-        handler.postDelayed({
-            disconnectGattServer()
-            // اسکن را نیز متوقف کنید اگر هنوز در حال اسکن هستید
-            if (scanning) {
-                scanning = false
-                bleScanner.stopScan(scanCallback)
-            }
-        }, 1000) // یک ثانیه صبر کنید تا داده ارسال شود
+        if (!permissionGranted) {
+            Log.d("dataas", "مجوز بلوتوث داده نشده است")
+            return
+        }
+
+        val data = loginViewModel.getSavedLoginData()
+
+        if (data!=null) {
+            val studentData = "${data.name} ${data.studentID} ${data.deviceID}".toByteArray(Charsets.UTF_8) // نمونه اطلاعات
+            characteristic.value = studentData
+            gatt.writeCharacteristic(characteristic)
+            Log.d("dataas", "داده حضور ارسال شد: ${String(studentData)}")
+            // پس از ارسال، اتصال را با تأخیر قطع کنید
+            handler.postDelayed({
+                disconnectGattServer()
+                // اسکن را نیز متوقف کنید اگر هنوز در حال اسکن هستید
+                if (scanning) {
+                    scanning = false
+                    bleScanner.stopScan(scanCallback)
+                }
+            }, 1000) // یک ثانیه صبر کنید تا داده ارسال شود
+        }else{
+            Log.v("dataas","خظا در دیتابیس !")
+        }
     }
 
     @SuppressLint("MissingPermission")
     private fun disconnectGattServer() {
+        // بررسی مجوز با توجه به نسخه اندروید
+        val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.BLUETOOTH
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+
+        if (!permissionGranted) {
+            Log.d("dataas", "مجوز بلوتوث داده نشده است")
+            return
+        }
+
         bluetoothGatt?.disconnect()
         bluetoothGatt?.close()
         bluetoothGatt = null
-        Log.d("GATTClient", "اتصال GATT بسته شد")
+        Log.d("dataas", "اتصال GATT بسته شد")
     }
-
 }

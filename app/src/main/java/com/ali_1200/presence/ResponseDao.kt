@@ -1,0 +1,19 @@
+package com.ali_1200.presence
+
+import androidx.lifecycle.LiveData
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+
+// DAO (Data Access Object) برای مدیریت عملیات دیتابیس مربوط به لاگین
+@Dao
+interface ResponseDao {
+    // درج یا جایگزینی رکورد در صورت وجود تضاد (مثلاً اگر کاربر قبلاً لاگین کرده بود)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertLoginData(data: dateResponse)
+
+    @Query("SELECT * FROM Respons")
+    fun getLoginData(): LiveData<List<dateResponse>> // ✅ حالا LiveData برمی‌گردونه
+
+}

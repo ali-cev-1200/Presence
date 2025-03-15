@@ -8,11 +8,13 @@ import androidx.room.RoomDatabase
 @Database(
     version = 1,
     exportSchema = false,
-    entities = [Logingdata::class]
+    entities = [Logingdata::class,dateResponse::class]
 )
 abstract class MainDatabase : RoomDatabase() {
 
     abstract val loginDao: LoginDao
+    abstract val responseDao: ResponseDao
+
 
     companion object {
 

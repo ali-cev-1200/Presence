@@ -27,13 +27,16 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.ali_1200.presence.databinding.BleadvertiserfragmentBinding
 import java.util.*
 
 class BLEAdvertiserFragment : Fragment() {
     lateinit var binding: BleadvertiserfragmentBinding
+    lateinit var ResponseRepository: ResponseRepository
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
+    private lateinit var adapter: AttendanceAdapter
     private var gattServer: BluetoothGattServer? = null
     private var advertiser: BluetoothLeAdvertiser? = null
     private val SERVICE_UUID: UUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
@@ -53,6 +56,7 @@ class BLEAdvertiserFragment : Fragment() {
             requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
 
+        ResponseRepository = ResponseRepository(requireContext())
         advertiser = bluetoothAdapter.bluetoothLeAdvertiser
 
         val btnStart = binding.start
@@ -63,36 +67,54 @@ class BLEAdvertiserFragment : Fragment() {
             startAdvertising()
         }
         btnStop.setOnClickListener { stopAdvertising() }
+
+        // تنظیم RecyclerView
+        adapter = AttendanceAdapter()
+        binding.recyclerAttendance.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = this@BLEAdvertiserFragment.adapter
+        }
+
+        // ✅ مشاهده تغییرات `LiveData` و آپدیت خودکار `RecyclerView`
+        ResponseRepository.date.observe(viewLifecycleOwner) { data ->
+            adapter.submitList(data)
+        }
     }
 
     private fun checkPermissionsAndStartAdvertising() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // اندروید ۱۲ به بعد
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_ADVERTISE
-                ) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_SCAN
-                ) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
+        val permissionsToRequest = mutableListOf<String>()
 
-                ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    arrayOf(
-                        Manifest.permission.BLUETOOTH_ADVERTISE,
-                        Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    ),
-                    1001
-                )
-                return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // اندروید 12 به بالا
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADVERTISE)
+            }
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_SCAN)
+            }
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+        } else { // اندروید 11 و پایین‌تر
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH)
+            }
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADMIN)
+            }
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                requireActivity(),
+                permissionsToRequest.toTypedArray(),
+                1001
+            )
+            return
+        }
+
         startAdvertising() // اگر مجوزها داده شده بود، تبلیغات BLE را شروع کن
     }
 
@@ -148,7 +170,7 @@ class BLEAdvertiserFragment : Fragment() {
     private fun startGattServer() {
         gattServer = bluetoothManager.openGattServer(requireContext(), gattServerCallback)
         if (gattServer == null) {
-            Log.e("GATTServer", "راه‌اندازی GATT Server با خطا مواجه شد")
+            Log.e("dataat", "راه‌اندازی GATT Server با خطا مواجه شد")
             return
         }
 
@@ -161,7 +183,7 @@ class BLEAdvertiserFragment : Fragment() {
 
         service.addCharacteristic(characteristic)
         gattServer?.addService(service)
-        Log.d("GATTServer", "GATT Server با موفقیت شروع شد")
+        Log.d("dataat", "GATT Server با موفقیت شروع شد")
     }
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
@@ -176,7 +198,7 @@ class BLEAdvertiserFragment : Fragment() {
             value: ByteArray?
         ) {
             val receivedData = value?.toString(Charsets.UTF_8)
-            Log.d("GATTServer", "داده دریافت شد: $receivedData")
+            Log.d("dataat", "داده دریافت شد: $receivedData")
 
             // پردازش داده‌ها
             if (receivedData != null) {
@@ -189,18 +211,27 @@ class BLEAdvertiserFragment : Fragment() {
     }
 
     private fun saveReceivedData(data: String) {
-        val parts = data.split(",")
+        val parts = data.split(" ")
         if (parts.size == 3) {
             val studentName = parts[0]
             val studentId = parts[1]
             val androidId = parts[2]
 
             Log.d(
-                "GATTServer",
+                "dataat",
                 "📝 دانشجو: $studentName | کد دانشجویی: $studentId | Android ID: $androidId"
             )
-            Log.v("GATTServer", data)
-            // TODO: ذخیره در دیتابیس یا نمایش در UI
+            Log.v("dataat", data)
+//            Toast.makeText(requireContext(), data, Toast.LENGTH_LONG).show()
+
+            val data = dateResponse(studentId,studentName,androidId+System.currentTimeMillis().toString())
+            ResponseRepository.insertdata(data)
         }
     }
+
+    private fun setupRecyclerView() {
+
+
+    }
+
 }
