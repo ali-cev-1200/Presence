@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
+    android:layout_margin="10dp"
+    app:cardCornerRadius="10dp"
     app:rippleColor="@color/white"
     android:backgroundTint="@color/white"
     app:cardElevation="4dp">
@@ -20,7 +20,7 @@
             android:id="@+id/txtStudentName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="نام دانشجو"
+            android:text="علی یزدانی"
             android:textColor="@android:color/black"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -31,9 +31,9 @@
             android:id="@+id/txtStudentId"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="کد دانشجویی"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="14sp"
+            android:text="02131161905040"
+            android:textSize="16sp"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -41,10 +41,10 @@
             android:id="@+id/txtAttendanceTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="زمان حضور"
+            android:text="18:32"
+            android:layout_marginTop="5dp"
             android:textColor="@android:color/holo_blue_dark"
             android:textSize="14sp"
-            android:textStyle="italic"
             app:layout_constraintEnd_toEndOf="@+id/txtStudentName"
             app:layout_constraintStart_toStartOf="@+id/txtStudentName"
             app:layout_constraintTop_toBottomOf="@+id/txtStudentName" />
@@ -53,12 +53,12 @@
             android:id="@+id/txtTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="زمان حضور"
+            android:text="5 دقیقه پیش"
             android:textColor="@android:color/holo_blue_dark"
             android:textSize="14sp"
-            android:textStyle="italic"
+            app:layout_constraintBottom_toBottomOf="@+id/txtAttendanceTime"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txtStudentId" />
+            app:layout_constraintTop_toTopOf="@+id/txtAttendanceTime" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

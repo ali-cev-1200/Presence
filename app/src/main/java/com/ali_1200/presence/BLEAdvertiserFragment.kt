@@ -29,6 +29,7 @@ import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ali_1200.presence.databinding.BleadvertiserfragmentBinding
+import java.text.SimpleDateFormat
 import java.util.*
 
 class BLEAdvertiserFragment : Fragment() {
@@ -229,9 +230,9 @@ class BLEAdvertiserFragment : Fragment() {
         }
     }
 
-    private fun setupRecyclerView() {
-
-
+    private fun formatTimestamp(timestamp: Long): String {
+        val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/yyyy", Locale.getDefault())
+        return sdf.format(Date(timestamp))
     }
 
 }

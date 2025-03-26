@@ -20,4 +20,16 @@ class LoginRepository(context: Context) {
     fun insertdata(data: Logingdata){
         loginDao.insertLoginData(data)
     }
+
+    fun sendStatus(value :Boolean){
+        loginDao.sendData(value)
+    }
+
+    fun setTime(value :Long){
+        loginDao.setTime(value)
+    }
+
+    fun getIsSent(): Boolean {
+        return loginDao.getIsSentSync() ?: false // اگر مقدار `null` بود، مقدار پیش‌فرض `false` می‌شه
+    }
 }

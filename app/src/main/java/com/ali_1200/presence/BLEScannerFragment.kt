@@ -26,6 +26,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.ali_1200.presence.databinding.FragStudentBinding
+import java.text.SimpleDateFormat
 import java.util.*
 
 class BLEScannerFragment : Fragment() {
@@ -33,7 +34,7 @@ class BLEScannerFragment : Fragment() {
     lateinit var loginViewModel: LoginRepository
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
-    private var dataAlreadySent = false
+    private var dataAlreadySent: Boolean = false
     private lateinit var bleScanner: BluetoothLeScanner
     private val handler = Handler(Looper.getMainLooper())
     private var scanning = false
@@ -54,10 +55,12 @@ class BLEScannerFragment : Fragment() {
             requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
         bleScanner = bluetoothAdapter.bluetoothLeScanner
-        dataAlreadySent = false
+
         val btnStartScan = binding.start
         val txtScanResult = binding.result
         loginViewModel = LoginRepository(requireContext())
+
+        dataAlreadySent = loginViewModel.getIsSent()
 
         btnStartScan.setOnClickListener {
             checkPermissionsAndStartScan(txtScanResult)
@@ -123,6 +126,7 @@ class BLEScannerFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun startScan(txtScanResult: TextView) {
         if (scanning) return
+        getRelativeTime(loginViewModel.getSavedLoginData()?.timestamp!!)
         if (dataAlreadySent) {
             txtScanResult.text = "داده قبلاً ارسال شده است"
             return
@@ -184,7 +188,8 @@ class BLEScannerFragment : Fragment() {
 
         if (!permissionGranted) {
             Log.d("dataas", "مجوز بلوتوث داده نشده است")
-            Toast.makeText(requireContext(), "لطفاً مجوز بلوتوث را فعال کنید", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "لطفاً مجوز بلوتوث را فعال کنید", Toast.LENGTH_LONG)
+                .show()
             return
         }
 
@@ -237,7 +242,6 @@ class BLEScannerFragment : Fragment() {
                     // فقط اگر قبلاً ارسال نشده باشد، ارسال کن
                     if (!dataAlreadySent) {
                         sendAttendanceData(gatt, it)
-                        dataAlreadySent = true // تنظیم وضعیت به ارسال شده
                     } else {
                         Log.d(
                             "dataas",
@@ -252,7 +256,10 @@ class BLEScannerFragment : Fragment() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendAttendanceData(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+    private fun sendAttendanceData(
+        gatt: BluetoothGatt,
+        characteristic: BluetoothGattCharacteristic
+    ) {
         // بررسی مجوز با توجه به نسخه اندروید
         val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ActivityCompat.checkSelfPermission(
@@ -273,11 +280,16 @@ class BLEScannerFragment : Fragment() {
 
         val data = loginViewModel.getSavedLoginData()
 
-        if (data!=null) {
-            val studentData = "${data.name} ${data.studentID} ${data.deviceID}".toByteArray(Charsets.UTF_8) // نمونه اطلاعات
+        if (data != null) {
+            val studentData =
+                "${data.name} ${data.studentID} ${data.deviceID}".toByteArray(Charsets.UTF_8) // نمونه اطلاعات
             characteristic.value = studentData
             gatt.writeCharacteristic(characteristic)
+
             Log.d("dataas", "داده حضور ارسال شد: ${String(studentData)}")
+            loginViewModel.sendStatus(true) // تنظیم وضعیت به ارسال شده
+            loginViewModel.setTime(System.currentTimeMillis())
+
             // پس از ارسال، اتصال را با تأخیر قطع کنید
             handler.postDelayed({
                 disconnectGattServer()
@@ -287,8 +299,8 @@ class BLEScannerFragment : Fragment() {
                     bleScanner.stopScan(scanCallback)
                 }
             }, 1000) // یک ثانیه صبر کنید تا داده ارسال شود
-        }else{
-            Log.v("dataas","خظا در دیتابیس !")
+        } else {
+            Log.v("dataas", "خظا در دیتابیس !")
         }
     }
 
@@ -316,5 +328,14 @@ class BLEScannerFragment : Fragment() {
         bluetoothGatt?.close()
         bluetoothGatt = null
         Log.d("dataas", "اتصال GATT بسته شد")
+    }
+
+    private fun getRelativeTime(timestamp: Long) {
+        val now = System.currentTimeMillis()
+        val diff = now - timestamp
+
+        if (diff > 24 * 60 * 60_000) {
+            loginViewModel.sendStatus(false)
+        }
     }
 }

@@ -2,7 +2,6 @@ package com.ali_1200.presence
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.Date
 
 @Entity(tableName = "Login")
 data class Logingdata(
@@ -10,7 +9,8 @@ data class Logingdata(
     val studentID: String,
     val name: String,
     val deviceID: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long? = 122,
+    val is_send: Boolean ? = false
 )
 
 @Entity(tableName = "Respons")

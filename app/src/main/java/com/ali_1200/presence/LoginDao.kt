@@ -16,4 +16,12 @@ interface LoginDao {
     @Query("SELECT * FROM Login LIMIT 1")
     fun getLoginData(): Logingdata?
 
+    @Query("UPDATE Login SET is_send = :value")
+    fun sendData(value :Boolean)
+
+    @Query("SELECT is_send FROM Login LIMIT 1")
+    fun getIsSentSync(): Boolean?
+
+    @Query("UPDATE Login SET timestamp = :value")
+    fun setTime(value :Long)
 }
