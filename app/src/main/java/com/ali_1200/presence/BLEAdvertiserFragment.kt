@@ -25,7 +25,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ali_1200.presence.databinding.BleadvertiserfragmentBinding
@@ -33,163 +35,141 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class BLEAdvertiserFragment : Fragment() {
-    lateinit var binding: BleadvertiserfragmentBinding
-    lateinit var ResponseRepository: ResponseRepository
-    private lateinit var bluetoothManager: BluetoothManager
-    private lateinit var bluetoothAdapter: BluetoothAdapter
+    private lateinit var binding: BleadvertiserfragmentBinding
+    private lateinit var responseRepository: ResponseRepository
     private lateinit var adapter: AttendanceAdapter
+
+    private val bluetoothManager by lazy {
+        requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    }
+    private val bluetoothAdapter by lazy { bluetoothManager.adapter }
     private var gattServer: BluetoothGattServer? = null
     private var advertiser: BluetoothLeAdvertiser? = null
-    private val SERVICE_UUID: UUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
+
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.all { it.value }
+        if (allGranted) {
+            startAdvertising()
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "مجوزهای لازم تایید نشدند",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    companion object {
+        private val SERVICE_UUID: UUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
+    }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         binding = BleadvertiserfragmentBinding.inflate(layoutInflater, container, false)
-
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-
-        bluetoothManager =
-            requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        bluetoothAdapter = bluetoothManager.adapter
-
-        ResponseRepository = ResponseRepository(requireContext())
+        responseRepository = ResponseRepository(requireContext())
         advertiser = bluetoothAdapter.bluetoothLeAdvertiser
 
-        val btnStart = binding.start
-        val btnStop = binding.stop
+        setupRecyclerView()
+        setupButtonListeners()
+        observeAttendanceData()
+    }
 
-        btnStart.setOnClickListener {
-            checkPermissionsAndStartAdvertising()
-            startAdvertising()
-        }
-        btnStop.setOnClickListener { stopAdvertising() }
-
-        // تنظیم RecyclerView
+    private fun setupRecyclerView() {
         adapter = AttendanceAdapter()
         binding.recyclerAttendance.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@BLEAdvertiserFragment.adapter
         }
+    }
 
-        // ✅ مشاهده تغییرات `LiveData` و آپدیت خودکار `RecyclerView`
-        ResponseRepository.date.observe(viewLifecycleOwner) { data ->
-            val sortedList = data.sortedByDescending { it.timestamp } // آیتم جدید رو اول بذار
+    private fun setupButtonListeners() {
+        binding.start.setOnClickListener {
+            checkAndRequestPermissions()
+        }
+
+        binding.stop.setOnClickListener {
+            stopAdvertising()
+        }
+    }
+
+    private fun observeAttendanceData() {
+        responseRepository.date.observe(viewLifecycleOwner) { data ->
+            val sortedList = data.sortedByDescending { it.timestamp }
             adapter.submitList(sortedList)
             binding.recyclerAttendance.scrollToPosition(0)
         }
     }
+    private fun checkAndRequestPermissions() {
+        val permissionsToRequest = PermissionUtils.getRequiredPermissions(isAdvertiser = true)
+        val notGrantedPermissions = PermissionUtils.checkPermissions(requireContext(), permissionsToRequest)
 
-    private fun checkPermissionsAndStartAdvertising() {
-        val permissionsToRequest = mutableListOf<String>()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // اندروید 12 به بالا
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_ADVERTISE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADVERTISE)
-            }
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_SCAN
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH_SCAN)
-            }
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
-            }
-        } else { // اندروید 11 و پایین‌تر
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH)
-            }
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_ADMIN
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADMIN)
-            }
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
-            }
+        if (notGrantedPermissions.isNotEmpty()) {
+            permissionLauncher.launch(notGrantedPermissions.toTypedArray())
+        } else {
+            startAdvertising()
         }
-
-        if (permissionsToRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                permissionsToRequest.toTypedArray(),
-                1001
-            )
-            return
-        }
-
-        startAdvertising() // اگر مجوزها داده شده بود، تبلیغات BLE را شروع کن
     }
-
 
     @SuppressLint("MissingPermission")
     private fun startAdvertising() {
         if (advertiser == null || !bluetoothAdapter.isEnabled) {
-            Log.e("BLEAdvertiser", "بلوتوث خاموش است یا پشتیبانی نمی‌شود")
-            Toast.makeText(requireContext(), "بلوتوث خاموش است", Toast.LENGTH_LONG).show()
+            showAdvertisingError("بلوتوث خاموش است یا پشتیبانی نمی‌شود")
             return
         }
 
-        val settings = AdvertiseSettings.Builder()
+        val settings = createAdvertiseSettings()
+        val data = createAdvertiseData()
+
+        advertiser?.startAdvertising(settings, data, advertiseCallback)
+    }
+
+    private fun createAdvertiseSettings(): AdvertiseSettings =
+        AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
             .setConnectable(true)
             .build()
 
-        val data = AdvertiseData.Builder()
+    private fun createAdvertiseData(): AdvertiseData =
+        AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(SERVICE_UUID))
             .setIncludeDeviceName(true)
             .build()
-
-        advertiser?.startAdvertising(settings, data, advertiseCallback)
-    }
 
     @SuppressLint("MissingPermission")
     private fun stopAdvertising() {
         advertiser?.stopAdvertising(advertiseCallback)
     }
 
+    private fun showAdvertisingError(message: String) {
+        Log.e("BLEAdvertiser", message)
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+    }
+
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-            super.onStartSuccess(settingsInEffect)
             Log.d("BLEAdvertiser", "تبلیغات BLE با موفقیت شروع شد")
-            Toast.makeText(requireContext(), "تبلیغات BLE با موفقیت شروع شد", Toast.LENGTH_LONG)
-                .show()
+            Toast.makeText(
+                requireContext(),
+                "تبلیغات BLE با موفقیت شروع شد",
+                Toast.LENGTH_LONG
+            ).show()
             startGattServer()
         }
 
         override fun onStartFailure(errorCode: Int) {
-            super.onStartFailure(errorCode)
-            Log.e("BLEAdvertiser", "خطا در شروع تبلیغات BLE: $errorCode")
-            Toast.makeText(
-                requireContext(),
-                "خطا در شروع تبلیغات BLE: $errorCode",
-                Toast.LENGTH_LONG
-            ).show()
+            showAdvertisingError("خطا در شروع تبلیغات BLE: $errorCode")
         }
     }
 
@@ -258,7 +238,7 @@ class BLEAdvertiserFragment : Fragment() {
                 now,
                 formatTimestamp(now)
             )
-            ResponseRepository.insertdata(data)
+            responseRepository.insertdata(data)
         }
     }
 

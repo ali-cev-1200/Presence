@@ -2,7 +2,6 @@ package com.ali_1200.presence
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -10,73 +9,111 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.app.ActivityCompat
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.ali_1200.presence.databinding.FragLoginBinding
 
 class Frag_Login : Fragment() {
-    lateinit var binding: FragLoginBinding
-    lateinit var loginViewModel: LoginRepository
+    private lateinit var binding: FragLoginBinding
+    private lateinit var loginViewModel: LoginRepository
+
+    // Permission launcher for multiple permissions
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.all { it.value }
+        if (allGranted) {
+            // Permissions granted, proceed with BLE setup
+            proceedWithBLESetup()
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "برای استفاده از برنامه، مجوزها باید تایید شوند",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragLoginBinding.inflate(layoutInflater, container, false)
         return binding.root
     }
 
     @SuppressLint("HardwareIds")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         loginViewModel = LoginRepository(requireContext())
-        checkPermissionsAndStartAdvertising()
+
+        // Check and request BLE permissions
+        checkAndRequestBLEPermissions()
+
         binding.btnCont.setOnClickListener {
-            val name = binding.tietName.text.toString()
-            val studentid = binding.tietStudentId.text.toString()
-
-            if (name.isNotEmpty() && studentid.isNotEmpty()) {
-
-                val androidID = Settings.Secure.getString(
-                    requireContext().contentResolver,
-                    Settings.Secure.ANDROID_ID
-                )
-                val data = Logingdata(1, studentid, name, androidID)
-                loginViewModel.insertdata(data)
-
-                if (studentid == "1") {
-                    replace_Fragment(BLEAdvertiserFragment())
-                } else {
-                    replace_Fragment(BLEScannerFragment())
-                }
-            }
+            handleLoginSubmission()
         }
     }
 
-    fun replace_Fragment(fragment: Fragment) {
+    private fun checkAndRequestBLEPermissions() {
+        val permissionsToRequest = PermissionUtils.getRequiredPermissions()
+        val notGrantedPermissions = PermissionUtils.checkPermissions(requireContext(), permissionsToRequest)
 
-        val Transaction = parentFragmentManager.beginTransaction()
-        Transaction.replace(R.id.frag_main, fragment)
-        Transaction.addToBackStack(null)
-        Transaction.commit()
+        if (notGrantedPermissions.isNotEmpty()) {
+            permissionLauncher.launch(notGrantedPermissions.toTypedArray())
+        } else {
+            proceedWithBLESetup()
+        }
     }
-    private fun checkPermissionsAndStartAdvertising() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // اندروید ۱۲ به بعد
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
 
-                ActivityCompat.requestPermissions(
-                    requireContext() as Activity,
-                    arrayOf(
-                        Manifest.permission.BLUETOOTH_ADVERTISE,
-                        Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    ),
-                    1001
-                )
-                return
-            }
-        } // اگر مجوزها داده شده بود، تبلیغات BLE را شروع کن
+    private fun proceedWithBLESetup() {
+        // Any initialization needed after permissions are granted
+        Toast.makeText(
+            requireContext(),
+            "مجوزهای بلوتوث تایید شدند",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun handleLoginSubmission() {
+        val name = binding.tietName.text.toString()
+        val studentId = binding.tietStudentId.text.toString()
+
+        if (name.isBlank() || studentId.isBlank()) {
+            Toast.makeText(
+                requireContext(),
+                "لطفاً تمام فیلدها را پر کنید",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val androidID = Settings.Secure.getString(
+            requireContext().contentResolver,
+            Settings.Secure.ANDROID_ID
+        )
+
+        val loginData = Logingdata(1, studentId, name, androidID)
+        loginViewModel.insertdata(loginData)
+
+        // Navigate to appropriate fragment based on student ID
+        val targetFragment = when (studentId) {
+            "1" -> BLEAdvertiserFragment()
+            else -> BLEScannerFragment()
+        }
+
+        replaceFragment(targetFragment)
+    }
+
+    private fun replaceFragment(fragment: Fragment) {
+        parentFragmentManager.beginTransaction().apply {
+            replace(R.id.frag_main, fragment)
+            addToBackStack(null)
+            commit()
+        }
     }
 }

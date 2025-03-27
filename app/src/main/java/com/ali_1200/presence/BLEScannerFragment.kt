@@ -23,234 +23,234 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.ali_1200.presence.databinding.FragStudentBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
 class BLEScannerFragment : Fragment() {
-    lateinit var binding: FragStudentBinding
-    lateinit var loginViewModel: LoginRepository
-    private var teacherFound = false // جلوگیری از چندبار اتصال
-    private lateinit var bluetoothManager: BluetoothManager
-    private lateinit var bluetoothAdapter: BluetoothAdapter
-    private var dataAlreadySent: Boolean = false
-    private lateinit var bleScanner: BluetoothLeScanner
+    private lateinit var binding: FragStudentBinding
+    private lateinit var loginViewModel: LoginRepository
+
+    private val bluetoothManager by lazy {
+        requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    }
+    private val bluetoothAdapter by lazy { bluetoothManager.adapter }
+    private val bleScanner by lazy { bluetoothAdapter.bluetoothLeScanner }
     private val handler = Handler(Looper.getMainLooper())
+
+    private var teacherFound = false
     private var scanning = false
     private var bluetoothGatt: BluetoothGatt? = null
-    private val SCAN_PERIOD: Long = 10000 // 10 ثانیه
-    private val TARGET_UUID: UUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
+
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.all { it.value }) {
+            startBLEScan()
+        } else {
+            showPermissionDeniedToast()
+        }
+    }
+
+    companion object {
+        private const val SCAN_PERIOD: Long = 10_000 // 10 seconds
+        private val TARGET_SERVICE_UUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
+        private val TARGET_CHARACTERISTIC_UUID = UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
+    }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         binding = FragStudentBinding.inflate(layoutInflater, container, false)
-
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        bluetoothManager =
-            requireContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        bluetoothAdapter = bluetoothManager.adapter
-        bleScanner = bluetoothAdapter.bluetoothLeScanner
+        super.onViewCreated(view, savedInstanceState)
 
-        val btnStartScan = binding.start
-        val txtScanResult = binding.result
         loginViewModel = LoginRepository(requireContext())
+        // بررسی وجود timestamp قبل از صدا زدن
+        loginViewModel.getSavedLoginData()?.timestamp?.let { timestamp ->
+            getRelativeTime(timestamp)
+        }
+        setupUI()
+    }
 
-        dataAlreadySent = loginViewModel.getIsSent()
+    private fun setupUI() {
+        // اگر داده قبلاً ارسال شده، نمایش وضعیت
+        if (loginViewModel.getIsSent()) {
+            binding.result.text = "داده قبلاً ارسال شده است"
+        }
 
-        btnStartScan.setOnClickListener {
-            checkPermissionsAndStartScan(txtScanResult)
+        binding.start.setOnClickListener {
+            checkAndRequestPermissions()
         }
     }
 
-    private fun checkPermissionsAndStartScan(txtScanResult: TextView) {
-        val permissionsToRequest = mutableListOf<String>()
+    private fun checkAndRequestPermissions() {
+        val requiredPermissions = getRequiredPermissions()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // اندروید 12 به بالا
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_SCAN
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH_SCAN)
-            }
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
-            }
-        } else { // اندروید 11 و پایین‌تر
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH)
-            }
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.BLUETOOTH_ADMIN
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADMIN)
-            }
-        }
-
-        // موقعیت مکانی برای هر دو نسخه اندروید لازم است
-        if (ActivityCompat.checkSelfPermission(
+        val notGrantedPermissions = requiredPermissions.filter { permission ->
+            ContextCompat.checkSelfPermission(
                 requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
+                permission
             ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
-        if (permissionsToRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                permissionsToRequest.toTypedArray(),
-                1002
-            )
-            return
+        if (notGrantedPermissions.isNotEmpty()) {
+            permissionLauncher.launch(notGrantedPermissions.toTypedArray())
+        } else {
+            startBLEScan()
         }
+    }
 
-        startScan(txtScanResult)
+    private fun getRequiredPermissions(): List<String> = buildList {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            add(Manifest.permission.BLUETOOTH_SCAN)
+            add(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            add(Manifest.permission.BLUETOOTH)
+            add(Manifest.permission.BLUETOOTH_ADMIN)
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    private fun showPermissionDeniedToast() {
+        Toast.makeText(
+            requireContext(),
+            "مجوزهای لازم تایید نشدند",
+            Toast.LENGTH_LONG
+        ).show()
     }
 
     @SuppressLint("MissingPermission")
-    private fun startScan(txtScanResult: TextView) {
-        if (scanning) return
+    private fun startBLEScan() {
         getRelativeTime(loginViewModel.getSavedLoginData()?.timestamp!!)
-        if (loginViewModel.getIsSent()) {
-            txtScanResult.text = "داده قبلاً ارسال شده است"
-            return
-        }
+        if (scanning || loginViewModel.getIsSent()) return
 
         scanning = true
-        txtScanResult.text = "در حال اسکن BLE..."
+        binding.result.text = "در حال اسکن BLE..."
 
-        handler.postDelayed({
-            scanning = false
-            bleScanner.stopScan(scanCallback)
-            txtScanResult.text = "اسکن متوقف شد"
-        }, SCAN_PERIOD)
-
+        handler.postDelayed(::stopScanning, SCAN_PERIOD)
         bleScanner.startScan(scanCallback)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun stopScanning() {
+        scanning = false
+        bleScanner.stopScan(scanCallback)
+        binding.result.text = "اسکن متوقف شد"
     }
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            super.onScanResult(callbackType, result)
-
-            if (!loginViewModel.getIsSent()&&!teacherFound) { // فقط یک بار پردازش کند
-                result.scanRecord?.serviceUuids?.forEach {
-                    if (it.uuid == TARGET_UUID) {
-                        Log.d("BLEScanner", "Beacon معلم پیدا شد: ${result.device.address}")
-                        Toast.makeText(requireContext(), "Beacon معلم پیدا شد", Toast.LENGTH_SHORT).show()
-                        teacherFound=true
-                        // تاخیر کوتاه برای پایداری اتصال
-                        handler.postDelayed({
-                            connectToGattServer(result.device)
-                        }, 1000)
+            if (!loginViewModel.getIsSent() && !teacherFound) {
+                result.scanRecord?.serviceUuids?.forEach { uuid ->
+                    if (uuid.uuid == TARGET_SERVICE_UUID) {
+                        handleTeacherBeaconFound(result.device)
                     }
                 }
             }
         }
 
         override fun onScanFailed(errorCode: Int) {
-            super.onScanFailed(errorCode)
-            Log.e("BLEScanner", "خطا در اسکن BLE: $errorCode")
-            Toast.makeText(requireContext(), "خطا در اسکن، تلاش مجدد...", Toast.LENGTH_SHORT).show()
-
-            // تلاش مجدد برای اسکن در صورت خطا
-            handler.postDelayed({ startScan(binding.result) }, 3000)
+            handleScanError(errorCode)
         }
+    }
+
+    private fun handleTeacherBeaconFound(device: BluetoothDevice) {
+        teacherFound = true
+        Log.d("BLEScanner", "Beacon معلم پیدا شد: ${device.address}")
+
+        handler.post {
+            Toast.makeText(
+                requireContext(),
+                "Beacon معلم پیدا شد",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        handler.postDelayed({
+            connectToGattServer(device)
+        }, 1000)
+    }
+
+    private fun handleScanError(errorCode: Int) {
+        Log.e("BLEScanner", "خطا در اسکن BLE: $errorCode")
+        handler.post {
+            Toast.makeText(
+                requireContext(),
+                "خطا در اسکن، تلاش مجدد...",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        handler.postDelayed({ startBLEScan() }, 3000)
     }
 
     @SuppressLint("MissingPermission")
     private fun connectToGattServer(device: BluetoothDevice) {
-        // بررسی مجوز با توجه به نسخه اندروید
-        val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.BLUETOOTH
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-
-        if (!permissionGranted) {
-            Log.d("dataas", "مجوز بلوتوث داده نشده است")
-            Toast.makeText(requireContext(), "لطفاً مجوز بلوتوث را فعال کنید", Toast.LENGTH_LONG)
-                .show()
+        if (!hasBluetoothPermission()) {
+            showBluetoothPermissionError()
             return
         }
 
         bluetoothGatt = device.connectGatt(requireContext(), false, gattCallback)
     }
 
+    private fun hasBluetoothPermission(): Boolean {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Manifest.permission.BLUETOOTH_CONNECT
+        } else {
+            Manifest.permission.BLUETOOTH
+        }
+
+        return ContextCompat.checkSelfPermission(
+            requireContext(),
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun showBluetoothPermissionError() {
+        Log.d("BLEScanner", "مجوز بلوتوث داده نشده است")
+        Toast.makeText(
+            requireContext(),
+            "لطفاً مجوز بلوتوث را فعال کنید",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
     private val gattCallback = object : BluetoothGattCallback() {
-
+        @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            Log.d("dataas", "onConnectionStateChange: status=$status, newState=$newState")
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    Log.d("dataas", "متصل شد به GATT Server")
-
-                    // بررسی مجوز با توجه به نسخه اندروید
-                    val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.BLUETOOTH_CONNECT
-                        ) == PackageManager.PERMISSION_GRANTED
-                    } else {
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.BLUETOOTH
-                        ) == PackageManager.PERMISSION_GRANTED
-                    }
-
-                    if (!permissionGranted) {
-                        Log.d("dataas", "مجوز بلوتوث داده نشده است")
-                        return
-                    }
-
+            when (newState) {
+                BluetoothProfile.STATE_CONNECTED -> {
+                    Log.d("BLEScanner", "متصل شد به GATT Server")
                     gatt.discoverServices()
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    Log.d("dataas", "اتصال قطع شد")
+                }
+                BluetoothProfile.STATE_DISCONNECTED -> {
+                    Log.d("BLEScanner", "اتصال قطع شد")
                     gatt.close()
                 }
-            } else {
-                Log.e("dataas", "خطا در اتصال: $status")
-                disconnectGattServer()
             }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                val characteristic = gatt.getService(TARGET_UUID)?.getCharacteristic(
-                    UUID.fromString("00002A37-0000-1000-8000-00805F9B34FB")
-                )
+                val characteristic = gatt.getService(TARGET_SERVICE_UUID)
+                    ?.getCharacteristic(TARGET_CHARACTERISTIC_UUID)
+
                 characteristic?.let {
-                    // فقط اگر قبلاً ارسال نشده باشد، ارسال کن
                     if (!loginViewModel.getIsSent()) {
                         sendAttendanceData(gatt, it)
                     } else {
-                        Log.d(
-                            "dataas",
-                            "داده قبلاً ارسال شده است، از ارسال مجدد خودداری می‌شود"
-                        )
-                        // پس از اینکه دیگر نیازی به اتصال نیست، آن را قطع کنید
+                        Log.d("BLEScanner", "داده قبلاً ارسال شده است")
                         disconnectGattServer()
                     }
                 }
@@ -263,82 +263,63 @@ class BLEScannerFragment : Fragment() {
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic
     ) {
-        // بررسی مجوز با توجه به نسخه اندروید
-        val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.BLUETOOTH
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-
-        if (!permissionGranted) {
-            Log.d("dataas", "مجوز بلوتوث داده نشده است")
-            return
-        }
-
         val data = loginViewModel.getSavedLoginData()
 
-        if (data != null) {
-            val studentData =
-                "${data.name} ${data.studentID} ${data.deviceID}".toByteArray(Charsets.UTF_8) // نمونه اطلاعات
+        data?.let { loginData ->
+            val studentData = "${loginData.name} ${loginData.studentID} ${loginData.deviceID}"
+                .toByteArray(Charsets.UTF_8)
+
             characteristic.value = studentData
             gatt.writeCharacteristic(characteristic)
 
-            Log.d("dataas", "داده حضور ارسال شد: ${String(studentData)}")
-            teacherFound=false
-            loginViewModel.sendStatus(true) // تنظیم وضعیت به ارسال شده
-            loginViewModel.setTime(System.currentTimeMillis())
+            Log.d("BLEScanner", "داده حضور ارسال شد: $studentData")
 
-            // پس از ارسال، اتصال را با تأخیر قطع کنید
+            updateAttendanceStatus()
+
             handler.postDelayed({
                 disconnectGattServer()
-                // اسکن را نیز متوقف کنید اگر هنوز در حال اسکن هستید
-                if (scanning) {
-                    scanning = false
-                    bleScanner.stopScan(scanCallback)
-                }
-            }, 1000) // یک ثانیه صبر کنید تا داده ارسال شود
-        } else {
-            Log.v("dataas", "خظا در دیتابیس !")
+                stopScanningIfActive()
+            }, 1000)
+        } ?: run {
+            Log.e("BLEScanner", "خطا در دیتابیس!")
+        }
+    }
+
+    private fun updateAttendanceStatus() {
+        teacherFound = false
+        loginViewModel.sendStatus(true)
+        loginViewModel.setTime(System.currentTimeMillis())
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun stopScanningIfActive() {
+        if (scanning) {
+            scanning = false
+            bleScanner.stopScan(scanCallback)
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun disconnectGattServer() {
-        // بررسی مجوز با توجه به نسخه اندروید
-        val permissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.BLUETOOTH
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-
-        if (!permissionGranted) {
-            Log.d("dataas", "مجوز بلوتوث داده نشده است")
+        if (!hasBluetoothPermission()) {
+            showBluetoothPermissionError()
             return
         }
 
-        bluetoothGatt?.disconnect()
-        bluetoothGatt?.close()
+        bluetoothGatt?.let {
+            it.disconnect()
+            it.close()
+        }
         bluetoothGatt = null
-        Log.d("dataas", "اتصال GATT بسته شد")
+
+        Log.d("BLEScanner", "اتصال GATT بسته شد")
     }
 
     private fun getRelativeTime(timestamp: Long) {
         val now = System.currentTimeMillis()
         val diff = now - timestamp
 
-        if (diff > 24 /** 60 * 60_000*/) {
+        if (diff > 24 /** 60 * 60_000*/) { // 24 ساعت
             loginViewModel.sendStatus(false)
         }
     }
