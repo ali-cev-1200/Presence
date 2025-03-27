@@ -78,7 +78,9 @@ class BLEAdvertiserFragment : Fragment() {
 
         // ✅ مشاهده تغییرات `LiveData` و آپدیت خودکار `RecyclerView`
         ResponseRepository.date.observe(viewLifecycleOwner) { data ->
-            adapter.submitList(data)
+            val sortedList = data.sortedByDescending { it.timestamp } // آیتم جدید رو اول بذار
+            adapter.submitList(sortedList)
+            binding.recyclerAttendance.scrollToPosition(0)
         }
     }
 
@@ -86,23 +88,47 @@ class BLEAdvertiserFragment : Fragment() {
         val permissionsToRequest = mutableListOf<String>()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // اندروید 12 به بالا
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_ADVERTISE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADVERTISE)
             }
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_SCAN
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 permissionsToRequest.add(Manifest.permission.BLUETOOTH_SCAN)
             }
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
             }
         } else { // اندروید 11 و پایین‌تر
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 permissionsToRequest.add(Manifest.permission.BLUETOOTH)
             }
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.BLUETOOTH_ADMIN
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADMIN)
             }
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
@@ -224,15 +250,36 @@ class BLEAdvertiserFragment : Fragment() {
             )
             Log.v("dataat", data)
 //            Toast.makeText(requireContext(), data, Toast.LENGTH_LONG).show()
-
-            val data = dateResponse(studentId,studentName,androidId+System.currentTimeMillis().toString())
+            val now = System.currentTimeMillis()
+            val data = dateResponse(
+                studentId,
+                studentName,
+                androidId + now.toString(),
+                now,
+                formatTimestamp(now)
+            )
             ResponseRepository.insertdata(data)
         }
     }
 
     private fun formatTimestamp(timestamp: Long): String {
-        val sdf = SimpleDateFormat("HH:mm:ss - dd/MM/yyyy", Locale.getDefault())
+        val sdf = SimpleDateFormat("HH:mm:ss -- yyyy/MM/dd", Locale.getDefault())
         return sdf.format(Date(timestamp))
     }
 
+    fun stringToDate(dateString: String): Date? {
+        val format = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+        return format.parse(dateString) // خروجی Date
+    }
+
+//    fun convertToShamsi(dateString: Date): String {
+//        try {
+//            val persianDate = PersianDate(dateString) // ایجاد شی تاریخ شمسی
+//            val outputFormatter = PersianDateFormat("Y/m/d") // فرمت دلخواه
+//            return outputFormatter.format(persianDate) // خروجی مانند "1402/10/15"
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            return "خطا در تبدیل تاریخ ⚠️"
+//        }
+//    }
 }

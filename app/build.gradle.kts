@@ -66,4 +66,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
     // برای مدیریت چرخه حیات در بخش‌های مختلف اپلیکیشن
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+
+//    // کتابخانه برای استفاده از تاریخ شمسی و تبدیل آن
+//    implementation("com.github.samanzamani:PersianDate:1.7.1")
 }

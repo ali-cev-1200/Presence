@@ -18,5 +18,6 @@ data class dateResponse(
     val studentID: String,
     val name: String,
     @PrimaryKey val deviceID: String,
-//    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long,
+    val date :String?=""
 )

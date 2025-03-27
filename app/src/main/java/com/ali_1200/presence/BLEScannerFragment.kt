@@ -32,6 +32,7 @@ import java.util.*
 class BLEScannerFragment : Fragment() {
     lateinit var binding: FragStudentBinding
     lateinit var loginViewModel: LoginRepository
+    private var teacherFound = false // جلوگیری از چندبار اتصال
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var dataAlreadySent: Boolean = false
@@ -127,7 +128,7 @@ class BLEScannerFragment : Fragment() {
     private fun startScan(txtScanResult: TextView) {
         if (scanning) return
         getRelativeTime(loginViewModel.getSavedLoginData()?.timestamp!!)
-        if (dataAlreadySent) {
+        if (loginViewModel.getIsSent()) {
             txtScanResult.text = "داده قبلاً ارسال شده است"
             return
         }
@@ -147,19 +148,18 @@ class BLEScannerFragment : Fragment() {
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
-            result.scanRecord?.serviceUuids?.forEach {
-                if (it.uuid == TARGET_UUID) {
-                    Log.d("BLEScanner", "Beacon معلم پیدا شد: ${result.device.address}")
-                    Toast.makeText(
-                        requireContext(),
-                        "Beacon معلم پیدا شد: ${result.device.address}",
-                        Toast.LENGTH_LONG
-                    ).show()
 
-                    // اتصال به GATT Server معلم
-                    handler.postDelayed({
-                        connectToGattServer(result.device)
-                    }, 1000) // یک ثانیه تاخیر
+            if (!loginViewModel.getIsSent()&&!teacherFound) { // فقط یک بار پردازش کند
+                result.scanRecord?.serviceUuids?.forEach {
+                    if (it.uuid == TARGET_UUID) {
+                        Log.d("BLEScanner", "Beacon معلم پیدا شد: ${result.device.address}")
+                        Toast.makeText(requireContext(), "Beacon معلم پیدا شد", Toast.LENGTH_SHORT).show()
+                        teacherFound=true
+                        // تاخیر کوتاه برای پایداری اتصال
+                        handler.postDelayed({
+                            connectToGattServer(result.device)
+                        }, 1000)
+                    }
                 }
             }
         }
@@ -167,7 +167,10 @@ class BLEScannerFragment : Fragment() {
         override fun onScanFailed(errorCode: Int) {
             super.onScanFailed(errorCode)
             Log.e("BLEScanner", "خطا در اسکن BLE: $errorCode")
-            Toast.makeText(requireContext(), "خطا : ${errorCode}", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "خطا در اسکن، تلاش مجدد...", Toast.LENGTH_SHORT).show()
+
+            // تلاش مجدد برای اسکن در صورت خطا
+            handler.postDelayed({ startScan(binding.result) }, 3000)
         }
     }
 
@@ -240,7 +243,7 @@ class BLEScannerFragment : Fragment() {
                 )
                 characteristic?.let {
                     // فقط اگر قبلاً ارسال نشده باشد، ارسال کن
-                    if (!dataAlreadySent) {
+                    if (!loginViewModel.getIsSent()) {
                         sendAttendanceData(gatt, it)
                     } else {
                         Log.d(
@@ -287,6 +290,7 @@ class BLEScannerFragment : Fragment() {
             gatt.writeCharacteristic(characteristic)
 
             Log.d("dataas", "داده حضور ارسال شد: ${String(studentData)}")
+            teacherFound=false
             loginViewModel.sendStatus(true) // تنظیم وضعیت به ارسال شده
             loginViewModel.setTime(System.currentTimeMillis())
 
@@ -334,7 +338,7 @@ class BLEScannerFragment : Fragment() {
         val now = System.currentTimeMillis()
         val diff = now - timestamp
 
-        if (diff > 24 * 60 * 60_000) {
+        if (diff > 24 /** 60 * 60_000*/) {
             loginViewModel.sendStatus(false)
         }
     }
