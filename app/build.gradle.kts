@@ -69,4 +69,7 @@ dependencies {
 
 //    // کتابخانه برای استفاده از تاریخ شمسی و تبدیل آن
 //    implementation("com.github.samanzamani:PersianDate:1.7.1")
+
+    // کتابخانه متریال دیزاین گوگل برای استفاده از کامپوننت‌ها و استایل‌های متریال
+    implementation("com.google.android.material:material:1.12.0")
 }

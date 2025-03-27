@@ -1,9 +1,29 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.Presence" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.Presence" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-    </style>
+<!--        <item name="fontFamily">@font/iran_sans_regular</item>-->
 
+        <!-- رنگ اصلی برنامه -->
+<!--        <item name="colorPrimary">@color/colorPrimary</item>-->
+        <!--    <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>-->
+<!--        <item name="colorOnPrimary">@color/colorOnSecondary</item>-->
+
+        <item name="android:forceDarkAllowed">false</item>
+        <!-- رنگ دوم برنامه -->
+<!--        <item name="colorSecondary">@color/colorSecondary</item>-->
+        <!--    <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>-->
+<!--        <item name="colorOnSecondary">@color/colorOnSecondary</item>-->
+
+        <!-- سایر رنگ‌ها -->
+<!--        <item name="android:colorBackground">@color/colorBackground</item>-->
+<!--        <item name="colorSurface">@color/colorSurface</item>-->
+<!--        <item name="colorOnSurface">@color/textOnSurface</item>-->
+        <!--    <item name="android:colorSurface">@color/colorSurface</item>-->
+
+        <!--        &lt;!&ndash; استایل کلی متن‌ها &ndash;&gt;-->
+        <!--        <item name="android:textColor">@color/textOnPrimary</item>-->
+    </style>
     <style name="Theme.Presence" parent="Base.Theme.Presence" />
 </resources>

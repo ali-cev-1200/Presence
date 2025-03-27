@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:layoutDirection="rtl"
         android:text="ورود"
+        android:layout_marginTop="30dp"
         android:textColor="?attr/colorSecondary"
         android:textSize="50sp"
         android:textStyle="bold"
