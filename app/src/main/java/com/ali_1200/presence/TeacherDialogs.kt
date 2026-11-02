@@ -131,14 +131,17 @@ fun Fragment.showSessionSettingsDialog(settings: SessionSettings, onChanged: () 
         val padding = (24 * density).toInt()
         setPadding(padding, (8 * density).toInt(), padding, 0)
     }
+    // متنی که با «QR» شروع می‌شود هم راست‌چین بماند
     fun label(text: String, top: Int) = TextView(context).apply {
         this.text = text
+        textDirection = View.TEXT_DIRECTION_RTL
         setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleSmall)
         typeface = ResourcesCompat.getFont(context, R.font.shabnam_bold_fd)
         setPadding(0, (top * density).toInt(), 0, (4 * density).toInt())
     }
     fun hint(text: String) = TextView(context).apply {
         this.text = text
+        textDirection = View.TEXT_DIRECTION_RTL
         setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
         typeface = ResourcesCompat.getFont(context, R.font.shabnam_fd)
         setTextColor(ContextCompat.getColor(context, R.color.on_surface_variant))
@@ -162,6 +165,7 @@ fun Fragment.showSessionSettingsDialog(settings: SessionSettings, onChanged: () 
     content.addView(hint("دانشجو باید QR روی صفحه شما را هم اسکن کند؛ QR هر ۱۰ ثانیه عوض می‌شود، پس عکسش برای دوست بیرون کلاس به کار نمی‌آید"))
     val qrSwitch = MaterialSwitch(context).apply {
         text = "QR الزامی باشد"
+        textDirection = View.TEXT_DIRECTION_RTL
         typeface = ResourcesCompat.getFont(context, R.font.shabnam_fd)
         isChecked = settings.qrRequired
     }

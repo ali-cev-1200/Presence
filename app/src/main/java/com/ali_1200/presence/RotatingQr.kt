@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
+import com.google.zxing.common.BitMatrix
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import java.nio.ByteBuffer
@@ -42,10 +43,14 @@ object RotatingQr {
 
     // تصویر سیاه و سفید QR برای نمایش روی صفحه استاد
     fun bitmap(text: String, size: Int): Bitmap {
-        val hints = mapOf(EncodeHintType.MARGIN to 1, EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M)
-        val matrix = QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, size, size, hints)
+        val matrix = matrix(text, size)
         val pixels = IntArray(size * size) { i -> if (matrix[i % size, i / size]) Color.BLACK else Color.WHITE }
         return Bitmap.createBitmap(pixels, size, size, Bitmap.Config.ARGB_8888)
+    }
+
+    fun matrix(text: String, size: Int): BitMatrix {
+        val hints = mapOf(EncodeHintType.MARGIN to 1, EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M)
+        return QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, size, size, hints)
     }
 
     private fun parse(text: String?): Pair<Long, String>? {

@@ -75,6 +75,10 @@
 |---|---|---|---|---|
 | ![](docs/screenshots/1-login.png) | ![](docs/screenshots/2-teacher-session.png) | ![](docs/screenshots/3-teacher-report.png) | ![](docs/screenshots/4-student-check-in.png) | ![](docs/screenshots/5-student-courses.png) |
 
+| استاد: تنظیمات جلسه | دانشجو: سابقه حضور | آیکون برنامه |
+|---|---|---|
+| ![](docs/screenshots/6-session-settings.png) | ![](docs/screenshots/7-student-history.png) | ![](docs/screenshots/8-app-icon.png) |
+
 - طراحی Material 3 با رنگ‌بندی یکدست، کارت‌ها و آیکون‌ها؛ فونت فارسی **شبنم** با اعداد فارسی
 - برنامه همیشه فارسی و راست‌به‌چپ است، حتی اگر زبان گوشی انگلیسی باشد
 - **ناوبری پایین**

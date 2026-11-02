@@ -4,6 +4,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.google.zxing.BinaryBitmap
+import com.google.zxing.RGBLuminanceSource
+import com.google.zxing.common.HybridBinarizer
+import com.google.zxing.qrcode.QRCodeReader
 
 class RotatingQrTest {
     private val code = "ABCDE23456"
@@ -59,5 +63,15 @@ class RotatingQrTest {
         // QR داخل اثبات دانشجوست و در مسیر عوض نمی‌شود
         val payload = answer(qrAt(now))
         assertEquals(AttendanceVerifier.Result.AUTH_FAILED, verifier.verify(address, payload.copy(qr = qrAt(now - RotatingQr.PERIOD)), now))
+    }
+
+    // QR ساخته‌شده واقعاً با اسکنر خوانده می‌شود
+    @Test
+    fun generatedQrCanBeScanned() {
+        val text = qrAt(now)
+        val matrix = RotatingQr.matrix(text, 300)
+        val pixels = IntArray(300 * 300) { i -> if (matrix[i % 300, i / 300]) 0xFF000000.toInt() else -1 }
+        val bitmap = BinaryBitmap(HybridBinarizer(RGBLuminanceSource(300, 300, pixels)))
+        assertEquals(text, QRCodeReader().decode(bitmap).text)
     }
 }
