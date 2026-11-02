@@ -18,6 +18,7 @@ abstract class MainDatabase : RoomDatabase() {
     abstract val responseDao: ResponseDao
     abstract val studentDao: StudentDao
     abstract val courseDao: CourseDao
+    abstract val backupDao: BackupDao
 
 
     companion object {

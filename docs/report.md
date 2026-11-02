@@ -31,18 +31,22 @@ QR چرخشی می‌تواند در آینده به‌عنوان عامل دو�
 ```mermaid
 flowchart LR
     subgraph T["گوشی استاد"]
-        TUI["صفحه استاد<br/>BLEAdvertiserFragment"]
+        TUI["صفحه‌های استاد<br/>TeacherViewModel"]
+        FGS["سرویس پیش‌زمینه<br/>AttendanceService"]
         ADV["پخش سیگنال BLE<br/>(Advertising)"]
         GS["GATT Server<br/>چالش + دریافت حضور"]
         VER["AttendanceVerifier<br/>بررسی HMAC و nonce"]
         TDB[("Room<br/>درس، لیست کلاس، حضورها")]
         XLS["خروجی Excel"]
+        BAK["فایل پشتیبان JSON"]
         TUI --> ADV
         TUI --> GS --> VER --> TDB
+        FGS -. "زنده نگه داشتن" .-> GS
         TDB --> XLS
+        TDB <--> BAK
     end
     subgraph S["گوشی دانشجو"]
-        SUI["صفحه دانشجو<br/>BLEScannerFragment"]
+        SUI["صفحه‌های دانشجو<br/>StudentViewModel"]
         BIO["اثر انگشت / قفل صفحه"]
         SCAN["اسکن BLE"]
         GC["GATT Client"]
@@ -56,7 +60,9 @@ flowchart LR
 
 - **زبان و کتابخانه‌ها:** Kotlin، Android Jetpack (Room، LiveData، Coroutines، Biometric)، Material Components
 - **الگوی معماری:** MVVM — صفحه (Fragment) ← ViewModel ← Repository ← DAO ← SQLite.
-  بخش بلوتوث در کلاس‌های `AttendanceServer` و `AttendanceClient` جداست و داخل ViewModel نگه داشته می‌شود تا با عوض شدن صفحه یا چرخش گوشی قطع نشود.
+  بخش بلوتوث در کلاس‌های `AttendanceServer` و `AttendanceClient` جداست. سرور استاد در کل برنامه یک نمونه دارد و
+  یک **سرویس پیش‌زمینه** (Foreground Service از نوع connectedDevice) تا وقتی حضور و غیاب روشن است برنامه را زنده نگه می‌دارد؛
+  پس با عوض شدن صفحه، چرخش گوشی، قفل شدن صفحه یا رفتن به برنامه دیگر قطع نمی‌شود. اعلان این سرویس تعداد حاضرین امروز و دکمه «توقف» دارد.
 - **رابط کاربری:** Material 3، ناوبری پایین (استاد: حضور و غیاب / درس‌ها / گزارش؛ دانشجو: ثبت حضور / درس‌های من)، فونت فارسی شبنم، راست‌به‌چپ کامل
 - **بدون کتابخانه بیرونی** برای رمزنگاری (javax.crypto)، تاریخ شمسی و ساخت فایل Excel
 
@@ -196,6 +202,8 @@ erDiagram
 | بخش | توضیح |
 |---|---|
 | `AttendanceServer` | سمت استاد: پخش BLE و GATT Server؛ چالش می‌دهد و حضور را بررسی و ذخیره می‌کند |
+| `AttendanceService` | سرویس پیش‌زمینه استاد: اعلان «حضور و غیاب در حال اجرا» با تعداد حاضرین و دکمه توقف |
+| `AttendanceBackup` / `BackupRepository` | پشتیبان‌گیری همه درس‌ها (با کد کلاس)، لیست‌ها و حضورها در فایل JSON و بازیابی آن در یک تراکنش |
 | `AttendanceClient` | سمت دانشجو: اسکن، GATT Client، تشخیص درس با اثبات استاد، ارسال حضور امضاشده |
 | `TeacherViewModel` / `StudentViewModel` | داده‌های مشترک صفحه‌ها (درس فعال، حاضرین، غایبین، آمار) |
 | `AttendanceStats` | آمار هر درس: جلسه‌ها، درصد حضور، دانشجوهای در خطر حذف |
@@ -219,6 +227,7 @@ erDiagram
 | `RosterParserTest` | سطر عنوان، ستون ردیف، اعداد فارسی، جداکننده‌های مختلف، Windows-1256 |
 | `XlsxWriterTest` | ساختار فایل xlsx، escape کردن XML، نام ستون‌ها (A…Z، AA) |
 | `AttendanceExporterTest` | جدول دانشجو × جلسه، شمارش غیبت، هشدار ۳/۱۶، دانشجوی خارج از لیست |
+| `AttendanceBackupTest` | ساخت و خواندن فایل پشتیبان، رد فایل نامعتبر، جایگزینی کامل دیتابیس |
 | `MigrationTest` | انتقال داده‌های نسخه ۴ دیتابیس به نسخه ۵ (با Robolectric) |
 
 اجرا: `./gradlew testDebugUnitTest`
@@ -235,6 +244,8 @@ erDiagram
 | کد اشتباه | دانشجو با کد کلاس اشتباه؛ باید «استاد کلاس شما نیست» ببیند | |
 | ثبت تکراری | دانشجو دو بار در یک روز؛ بار دوم «قبلاً ثبت شده» | |
 | خروجی Excel | باز کردن فایل در Excel، Google Sheets و LibreOffice | |
+| پس‌زمینه | حضور و غیاب را روشن کنید، صفحه را قفل کنید و ۱۰ دقیقه بعد دانشجو ثبت کند | |
+| پشتیبان | پشتیبان از گوشی ۱، بازیابی روی گوشی ۲؛ دانشجوها بدون تغییر در گوشی ۲ ثبت شوند | |
 
 ## ۱۰. محدودیت‌ها و کارهای آینده
 
@@ -242,7 +253,7 @@ erDiagram
 - **QR چرخشی** به‌عنوان عامل دوم سنجش حضور
 - همگام‌سازی اختیاری با سرور دانشگاه وقتی اینترنت هست (معماری Offline-first)
 - وارد کردن مستقیم فایل `.xlsx` (الان باید CSV ذخیره شود)
-- معماری MVVM کامل با ViewModel و تزریق وابستگی (Hilt)
+- تزریق وابستگی (Hilt) به‌جای ساختن Repositoryها در ViewModel
 - اندازه‌گیری فاصله با RSSI برای محدود کردن دقیق‌تر به داخل کلاس
 
 ## ۱۱. منابع

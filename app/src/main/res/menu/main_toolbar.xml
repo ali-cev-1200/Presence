@@ -2,6 +2,19 @@
 <!-- منوی سه‌نقطه نوار بالا -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- فقط برای استاد -->
+    <item
+        android:id="@+id/action_backup"
+        android:icon="@drawable/ic_download"
+        android:title="پشتیبان‌گیری از اطلاعات"
+        android:visible="false"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_restore"
+        android:icon="@drawable/ic_upload"
+        android:title="بازیابی از پشتیبان"
+        android:visible="false"
+        app:showAsAction="never" />
     <item
         android:id="@+id/action_about"
         android:icon="@drawable/ic_info"

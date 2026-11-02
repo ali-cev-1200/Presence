@@ -1,6 +1,7 @@
 package com.ali_1200.presence
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -17,6 +18,7 @@ class TeacherViewModel(app: Application) : AndroidViewModel(app) {
     private val courseRepository = CourseRepository(app)
     private val responseRepository = ResponseRepository(app)
     private val rosterRepository = RosterRepository(app)
+    private val backupRepository = BackupRepository(app)
 
     val server = AttendanceServer.get(app)
 
@@ -147,6 +149,16 @@ class TeacherViewModel(app: Application) : AndroidViewModel(app) {
 
     fun stopServer() {
         server.stop()
+    }
+
+    suspend fun exportBackup(uri: Uri): Boolean = backupRepository.export(uri)
+
+    // همه درس‌های فعلی با درس‌های فایل جایگزین می‌شوند؛ پخش بلوتوث درس قبلی متوقف می‌شود
+    suspend fun restoreBackup(uri: Uri): Int {
+        server.stop()
+        val count = backupRepository.restore(uri)
+        selectedId.value = courseRepository.selectedCourseId
+        return count
     }
 
     suspend fun exportRows(course: Course): List<List<Any>> =

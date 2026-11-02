@@ -1,9 +1,12 @@
 package com.ali_1200.presence
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.os.Build
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -81,9 +84,14 @@ class AttendanceService : LifecycleService() {
         stopSelf()
     }
 
+    // بدون مجوز اعلان (اندروید ۱۳ به بعد) سرویس باز هم کار می‌کند، فقط اعلان به‌روز نمی‌شود
     private fun updateNotification() {
         if (!server.isActive) return
-        runCatching { NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildNotification()) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) return
+        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildNotification())
     }
 
     private fun buildNotification() = NotificationCompat.Builder(this, CHANNEL_ID)

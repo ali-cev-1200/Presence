@@ -1,11 +1,13 @@
 package com.ali_1200.presence
 
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -39,6 +41,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val backupLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument(AttendanceBackup.MIME_TYPE)
+    ) { uri -> if (uri != null) exportBackup(uri) }
+
+    // بعضی برنامه‌های مدیریت فایل نوع JSON را نمی‌شناسند؛ برای همین همه فایل‌ها نشان داده می‌شوند
+    private val restoreLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> if (uri != null) restoreBackup(uri) }
+
     companion object {
         private const val KEY_TAB = "current_tab"
         private const val LOGIN_TAG = "login"
@@ -59,6 +70,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
+                R.id.action_backup -> backupLauncher.launch(backupFileName())
+                R.id.action_restore -> confirmRestore()
                 R.id.action_about -> showAbout()
                 R.id.action_reset -> confirmReset()
             }
@@ -129,6 +142,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.toolbar.visibility = View.VISIBLE
+        binding.toolbar.menu.findItem(R.id.action_backup).isVisible = teacher
+        binding.toolbar.menu.findItem(R.id.action_restore).isVisible = teacher
         binding.bottomNav.visibility = View.VISIBLE
         ViewCompat.requestApplyInsets(binding.root)
 
@@ -198,10 +213,46 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun backupFileName(): String {
+        val today = PersianDate.fromTimestamp(System.currentTimeMillis()).toString().replace('/', '-')
+        return "پشتیبان-حضور-غیاب-$today.json"
+    }
+
+    private fun exportBackup(uri: Uri) {
+        lifecycleScope.launch {
+            val saved = teacherViewModel.exportBackup(uri)
+            showMessage(if (saved) "فایل پشتیبان ذخیره شد؛ آن را جای امنی نگه دارید" else "ذخیره فایل پشتیبان ناموفق بود")
+        }
+    }
+
+    private fun confirmRestore() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("بازیابی از پشتیبان")
+            .setMessage(
+                "همه درس‌ها، لیست‌های کلاس و حضورهای فعلی این گوشی با اطلاعات فایل پشتیبان جایگزین می‌شوند. " +
+                    "کد کلاس درس‌ها همان قبلی می‌ماند و دانشجوها لازم نیست دوباره درس اضافه کنند."
+            )
+            .setPositiveButton("انتخاب فایل") { _, _ -> restoreLauncher.launch(arrayOf("*/*")) }
+            .setNegativeButton("انصراف", null)
+            .show()
+    }
+
+    private fun restoreBackup(uri: Uri) {
+        lifecycleScope.launch {
+            val message = try {
+                val count = teacherViewModel.restoreBackup(uri)
+                "${PersianDate.toPersianDigits(count.toString())} درس از پشتیبان بازیابی شد"
+            } catch (e: AttendanceBackup.InvalidBackupException) {
+                e.message ?: "فایل پشتیبان نامعتبر است"
+            }
+            showMessage(message)
+        }
+    }
+
     // برای عوض کردن نقش یا شروع دوباره؛ همه درس‌ها و حضورها پاک می‌شوند
     private fun confirmReset() {
         val warning = if (isTeacher) {
-            "همه درس‌ها، لیست‌های کلاس و حضورهای ثبت‌شده پاک می‌شوند. اگر لازمشان دارید، اول از «گزارش» خروجی Excel بگیرید."
+            "همه درس‌ها، لیست‌های کلاس و حضورهای ثبت‌شده پاک می‌شوند. اگر لازمشان دارید، اول از منوی بالا «پشتیبان‌گیری از اطلاعات» را بزنید."
         } else {
             "درس‌ها و سابقه حضور شما روی این گوشی پاک می‌شود."
         }
