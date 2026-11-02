@@ -50,6 +50,8 @@ class AttendanceClient(context: Context) {
     companion object {
         private const val SCAN_PERIOD: Long = 10_000 // 10 seconds
         private const val TAG = "AttendanceClient"
+        private const val VERSION_MISMATCH_MESSAGE =
+            "نسخه برنامه گوشی استاد با این گوشی فرق دارد؛ نسخه یکسان را روی هر دو نصب کنید (منوی ⋮ ← درباره برنامه)"
     }
 
     private val appContext = context.applicationContext
@@ -261,6 +263,7 @@ class AttendanceClient(context: Context) {
                         State.Failed("این کد دانشجویی یا این گوشی امروز در این درس با مشخصات دیگری ثبت شده است")
                     )
                     BleConstants.STATUS_TOO_FAR -> finishAttempt(State.Failed(tooFarMessage()))
+                    BleConstants.STATUS_VERSION_MISMATCH -> finishAttempt(State.Failed(VERSION_MISMATCH_MESSAGE))
                     BleConstants.STATUS_QR_INVALID -> finishAttempt(
                         State.Failed("QR کهنه یا نامعتبر بود؛ دوباره «ثبت حضور» را بزنید و QR تازه را اسکن کنید")
                     )
@@ -292,7 +295,13 @@ class AttendanceClient(context: Context) {
         val address = gatt.device.address
         val challenge = TeacherChallenge.parse(value)
         if (challenge == null) {
-            handler.post { rejectTeacher(address, "گوشی استاد امضای دیجیتال ندارد؛ برنامه استاد باید به‌روز شود") }
+            Log.w(TAG, "چالش نامعتبر از $address: ${value.size} بایت، نسخه ${value.firstOrNull()}")
+            val message = when (TeacherChallenge.problem(value)) {
+                TeacherChallenge.Problem.INCOMPLETE ->
+                    "پیام گوشی استاد ناقص رسید (${value.size} از ${TeacherChallenge.SIZE} بایت)؛ دوباره تلاش کنید"
+                else -> VERSION_MISMATCH_MESSAGE
+            }
+            handler.post { rejectTeacher(address, message) }
             return
         }
 

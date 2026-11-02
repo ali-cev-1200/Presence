@@ -205,7 +205,7 @@ class MainActivity : AppCompatActivity() {
             .setIcon(R.mipmap.ic_launcher)
             .setTitle("درباره برنامه")
             .setMessage(
-                "حضور و غیاب بدون اینترنت — نسخه ۱٫۰\n\n" +
+                "حضور و غیاب بدون اینترنت — نسخه ${appVersion()} (پروتکل ${BleConstants.PROTOCOL_VERSION})\n\n" +
                     "ثبت حضور با بلوتوث کم‌مصرف و احراز هویت رمزنگاری‌شده (HMAC-SHA256)؛ " +
                     "همه اطلاعات فقط روی همین گوشی ذخیره می‌شود.\n\n" +
                     "فونت: شبنم، اثر صابر راستی‌کردار (مجوز SIL OFL 1.1)"
@@ -249,6 +249,10 @@ class MainActivity : AppCompatActivity() {
             showMessage(message)
         }
     }
+
+    // برای مقایسه نسخه برنامه گوشی استاد و دانشجو
+    private fun appVersion(): String =
+        runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
 
     // برای عوض کردن نقش یا شروع دوباره؛ همه درس‌ها و حضورها پاک می‌شوند
     private fun confirmReset() {

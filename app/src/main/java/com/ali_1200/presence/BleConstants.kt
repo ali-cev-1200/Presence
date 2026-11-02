@@ -11,6 +11,9 @@ object BleConstants {
     // دانشجو قبل از ارسال، nonce و اثبات استاد را از اینجا می‌خواند
     val CHALLENGE_UUID: UUID = UUID.fromString("6f1c2a4e-8b3d-4c7a-9e51-2d7f0b9a3c13")
 
+    // با هر تغییر قالب چالش یا پیام دانشجو یکی بالا می‌رود؛ دو گوشی با نسخه متفاوت پیام روشن می‌گیرند
+    const val PROTOCOL_VERSION = 3
+
     // MTU پیش‌فرض فقط ۲۰ بایت داده جا می‌دهد؛ برای نام‌های فارسی MTU بزرگ‌تر درخواست می‌شود
     const val REQUESTED_MTU = 185
 
@@ -23,4 +26,6 @@ object BleConstants {
     const val STATUS_TOO_FAR = 0x82
     // QR چرخشی اسکن نشده، کهنه یا جعلی است
     const val STATUS_QR_INVALID = 0x83
+    // برنامه دانشجو نسخه دیگری از پروتکل را دارد
+    const val STATUS_VERSION_MISMATCH = 0x84
 }

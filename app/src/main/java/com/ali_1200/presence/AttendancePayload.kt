@@ -15,6 +15,7 @@ data class AttendancePayload(
     val qr: String = ""
 ) {
     fun toBytes(): ByteArray = JSONObject()
+        .put("v", BleConstants.PROTOCOL_VERSION)
         .put("n", name)
         .put("s", studentId)
         .put("d", deviceId)
@@ -28,6 +29,7 @@ data class AttendancePayload(
         // در صورت خراب یا ناقص بودن داده null برمی‌گرداند
         fun fromBytes(bytes: ByteArray): AttendancePayload? = try {
             val json = JSONObject(bytes.toString(Charsets.UTF_8))
+            if (json.optInt("v") != BleConstants.PROTOCOL_VERSION) throw JSONException("نسخه دیگر پروتکل")
             AttendancePayload(
                 json.getString("n").trim(),
                 json.getString("s").trim(),
@@ -40,6 +42,13 @@ data class AttendancePayload(
             }
         } catch (e: JSONException) {
             null
+        }
+
+        // نسخه پروتکل پیام دانشجو (برای پیام «نسخه برنامه فرق دارد»)؛ پیام نسخه‌های قدیمی «v» ندارد
+        fun versionOf(bytes: ByteArray): Int = try {
+            JSONObject(bytes.toString(Charsets.UTF_8)).optInt("v")
+        } catch (e: JSONException) {
+            0
         }
     }
 }

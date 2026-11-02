@@ -29,8 +29,9 @@ class AttendanceVerifierTest {
     @Test
     fun validAnswerIsAccepted() {
         val challenge = verifier.challengeFor(address, 0, 1_000)!!
-        // باید با Long Read خوانده شود (بیشتر از MTU منهای ۱)
-        assertTrue(challenge.size > BleConstants.REQUESTED_MTU - 3)
+        // در یک بسته بلوتوث جا می‌شود (MTU منهای ۳ بایت سرآیند)؛ نیازی به خواندن تکه‌تکه نیست
+        assertEquals(TeacherChallenge.SIZE, challenge.size)
+        assertTrue(challenge.size <= BleConstants.REQUESTED_MTU - 3)
         assertAccepted(verifier.verify(address, studentAnswers(challenge), 2_000))
     }
 
@@ -84,7 +85,7 @@ class AttendanceVerifierTest {
         assertAccepted(verifier.verify(address, studentAnswers(near, rssi = -65), 4_000))
 
         // گوشی جعلی نمی‌تواند محدوده را عوض کند: امضا خراب می‌شود
-        val tampered = near.copyOf().also { it[AttendanceCrypto.NONCE_SIZE + AttendanceCrypto.PROOF_SIZE + 1] = 0 }
+        val tampered = near.copyOf().also { it[1 + AttendanceCrypto.NONCE_SIZE + AttendanceCrypto.PROOF_SIZE + 1] = 0 }
         assertFalse(TeacherChallenge.parse(tampered)!!.verifySignature())
     }
 

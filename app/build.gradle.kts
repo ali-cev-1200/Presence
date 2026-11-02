@@ -16,8 +16,9 @@ android {
         applicationId = "com.ali_1200.presence"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // نسخه را در «درباره برنامه» هر دو گوشی مقایسه کنید؛ پروتکل بلوتوث در BleConstants.PROTOCOL_VERSION
+        versionCode = 2
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

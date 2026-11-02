@@ -49,11 +49,36 @@ class TeacherSignatureTest {
         assertFalse(TeacherChallenge.parse(bytes)!!.verifySignature())
     }
 
-    // برنامه استاد قدیمی فقط nonce و HMAC (۳۲ بایت) می‌فرستاد
+    // نسخه دیگر برنامه یا پیام ناقص: دلیلش جدا گزارش می‌شود تا دانشجو پیام درست ببیند
     @Test
-    fun oldChallengeWithoutSignatureIsRejected() {
-        assertNull(TeacherChallenge.parse(ByteArray(AttendanceCrypto.NONCE_SIZE + AttendanceCrypto.PROOF_SIZE + SessionPolicy.SIZE)))
-        assertNull(TeacherChallenge.parse(ByteArray(10)))
+    fun wrongVersionAndIncompleteChallengeAreDetected() {
+        val bytes = TeacherChallenge.create(code, key, SessionPolicy()).toBytes()
+        assertNull(TeacherChallenge.problem(bytes))
+
+        val oldVersion = bytes.copyOf().also { it[0] = 2 }
+        assertEquals(TeacherChallenge.Problem.WRONG_VERSION, TeacherChallenge.problem(oldVersion))
+        assertNull(TeacherChallenge.parse(oldVersion))
+        assertEquals(TeacherChallenge.Problem.WRONG_VERSION, TeacherChallenge.problem(ByteArray(0)))
+
+        // فقط تکه اول خوانده شده (مثلاً MTU کوچک بدون خواندن تکه‌تکه)
+        val truncated = bytes.copyOf(100)
+        assertEquals(TeacherChallenge.Problem.INCOMPLETE, TeacherChallenge.problem(truncated))
+        assertNull(TeacherChallenge.parse(truncated))
+    }
+
+    // تبدیل امضا و کلید به قالب کوتاه و برگشت، برای صدها امضای تصادفی (r یا s گاهی کوتاه‌تر از ۳۲ بایت است)
+    @Test
+    fun compactFormatRoundTrips() {
+        repeat(300) {
+            val nonce = AttendanceCrypto.newNonce()
+            val der = TeacherSignature.sign(key, nonce)
+            val raw = EcFormat.derToRaw(der)
+            assertEquals(EcFormat.RAW_SIGNATURE_SIZE, raw.size)
+            assertTrue(TeacherSignature.verify(key.publicKeyBytes, EcFormat.rawToDer(raw), nonce))
+        }
+        val raw = EcFormat.rawPublicKey(key.publicKeyBytes)
+        assertEquals(EcFormat.RAW_PUBLIC_KEY_SIZE, raw.size)
+        assertTrue(EcFormat.x509PublicKey(raw).contentEquals(key.publicKeyBytes))
     }
 
     @Test

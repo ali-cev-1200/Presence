@@ -242,9 +242,11 @@ class AttendanceServer(
         val active = session
         val payload = AttendancePayload.fromBytes(value)
         if (active == null || payload == null) {
-            Log.w("AttendanceServer", "داده نامعتبر دریافت شد")
+            val oldVersion = AttendancePayload.versionOf(value) != BleConstants.PROTOCOL_VERSION
+            Log.w("AttendanceServer", "داده نامعتبر دریافت شد (نسخه دیگر: $oldVersion)")
             if (responseNeeded) {
-                gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                val status = if (oldVersion) BleConstants.STATUS_VERSION_MISMATCH else BluetoothGatt.GATT_FAILURE
+                gattServer?.sendResponse(device, requestId, status, 0, null)
             }
             return
         }
