@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ناوبری پایین دانشجو -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_check_in"
+        android:icon="@drawable/ic_check_circle"
+        android:title="ثبت حضور" />
+    <item
+        android:id="@+id/nav_my_courses"
+        android:icon="@drawable/ic_school"
+        android:title="درس‌های من" />
+</menu>

@@ -28,9 +28,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Presence"
         tools:targetApi="31">
+        <!-- نگه داشتن زبان فارسی برنامه در اندروید ۱۲ و قبل‌تر -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
+
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

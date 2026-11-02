@@ -1,29 +1,163 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Presence" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-<!--        <item name="fontFamily">@font/iran_sans_regular</item>-->
+    <!-- تم اصلی برنامه: Material 3 روشن با رنگ‌ها و فونت فارسی -->
+    <style name="Base.Theme.Presence" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="colorSecondaryContainer">@color/secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+        <item name="colorTertiary">@color/tertiary</item>
+        <item name="colorTertiaryContainer">@color/tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/on_tertiary_container</item>
+        <item name="colorError">@color/error</item>
+        <item name="colorErrorContainer">@color/error_container</item>
+        <item name="colorOnErrorContainer">@color/on_error_container</item>
 
-        <!-- رنگ اصلی برنامه -->
-<!--        <item name="colorPrimary">@color/colorPrimary</item>-->
-        <!--    <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>-->
-<!--        <item name="colorOnPrimary">@color/colorOnSecondary</item>-->
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outline_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/surface</item>
+        <item name="colorSurfaceContainerLow">@color/surface</item>
+        <item name="colorSurfaceContainer">@color/surface</item>
+        <item name="colorSurfaceContainerHigh">@color/surface</item>
+        <item name="colorSurfaceContainerHighest">@color/surface_variant</item>
 
         <item name="android:forceDarkAllowed">false</item>
-        <!-- رنگ دوم برنامه -->
-<!--        <item name="colorSecondary">@color/colorSecondary</item>-->
-        <!--    <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>-->
-<!--        <item name="colorOnSecondary">@color/colorOnSecondary</item>-->
+        <item name="android:windowLightStatusBar">true</item>
 
-        <!-- سایر رنگ‌ها -->
-<!--        <item name="android:colorBackground">@color/colorBackground</item>-->
-<!--        <item name="colorSurface">@color/colorSurface</item>-->
-<!--        <item name="colorOnSurface">@color/textOnSurface</item>-->
-        <!--    <item name="android:colorSurface">@color/colorSurface</item>-->
+        <!-- فونت شبنم برای همه متن‌ها -->
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="textAppearanceDisplaySmall">@style/TextAppearance.Presence.DisplaySmall</item>
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.Presence.HeadlineLarge</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.Presence.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.Presence.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.Presence.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.Presence.TitleMedium</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.Presence.TitleSmall</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.Presence.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.Presence.BodyMedium</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.Presence.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.Presence.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.Presence.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.Presence.LabelSmall</item>
 
-        <!--        &lt;!&ndash; استایل کلی متن‌ها &ndash;&gt;-->
-        <!--        <item name="android:textColor">@color/textOnPrimary</item>-->
+        <item name="materialCardViewStyle">@style/Widget.Presence.Card</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Presence.Dialog</item>
+        <item name="bottomNavigationStyle">@style/Widget.Presence.BottomNavigation</item>
+        <item name="toolbarStyle">@style/Widget.Presence.Toolbar</item>
     </style>
+
     <style name="Theme.Presence" parent="Base.Theme.Presence" />
+
+    <!-- کارت سفید بدون سایه با گوشه گرد؛ روی زمینه خاکستری روشن -->
+    <style name="Widget.Presence.Card" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@color/surface</item>
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="Widget.Presence.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="backgroundTint">@color/surface</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.Presence.BottomNavigation.Indicator</item>
+    </style>
+
+    <style name="Widget.Presence.BottomNavigation.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/primary_container</item>
+    </style>
+
+    <style name="Widget.Presence.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="titleTextAppearance">@style/TextAppearance.Presence.TitleLarge</item>
+        <item name="subtitleTextAppearance">@style/TextAppearance.Presence.BodySmall</item>
+    </style>
+
+    <style name="ThemeOverlay.Presence.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="fontFamily">@font/shabnam_family</item>
+    </style>
+
+    <!-- مقیاس متن Material 3 با فونت شبنم -->
+    <style name="TextAppearance.Presence.DisplaySmall" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Presence.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Presence.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Presence.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Presence.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Presence.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Presence.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Presence.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+    </style>
+    <style name="TextAppearance.Presence.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+    </style>
+    <style name="TextAppearance.Presence.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+    </style>
+    <style name="TextAppearance.Presence.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Presence.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+    </style>
+    <style name="TextAppearance.Presence.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+    </style>
+
+    <!-- کد کلاس: درشت، با اعداد لاتین و فاصله بین حروف -->
+    <style name="TextAppearance.Presence.ClassCode" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">monospace</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <!-- عدد بزرگ کارت‌های آمار -->
+    <style name="TextAppearance.Presence.StatNumber" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">@font/shabnam_family</item>
+        <item name="android:fontFamily">@font/shabnam_family</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ناوبری پایین استاد -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_session"
+        android:icon="@drawable/ic_bluetooth"
+        android:title="حضور و غیاب" />
+    <item
+        android:id="@+id/nav_courses"
+        android:icon="@drawable/ic_school"
+        android:title="درس‌ها" />
+    <item
+        android:id="@+id/nav_report"
+        android:icon="@drawable/ic_assessment"
+        android:title="گزارش" />
+</menu>
