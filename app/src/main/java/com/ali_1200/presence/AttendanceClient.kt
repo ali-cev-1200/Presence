@@ -39,7 +39,8 @@ class AttendanceClient(context: Context) {
         val login: Logingdata,
         val courses: List<Course>,
         val isRegisteredToday: (Long) -> Boolean,
-        val onRegistered: (Course) -> Unit
+        // کلید عمومی استاد (base64) برای ذخیره در اولین ثبت موفق
+        val onRegistered: (Course, String) -> Unit
     )
 
     companion object {
@@ -64,6 +65,12 @@ class AttendanceClient(context: Context) {
     private var request: Request? = null
     @Volatile
     private var currentCourse: Course? = null
+    @Volatile
+    private var currentTeacherKey: String? = null
+
+    // اگر هیچ استاد درستی پیدا نشد، دلیل رد آخرین گوشی به دانشجو گفته می‌شود
+    @Volatile
+    private var lastRejection: String? = null
 
     private var bleScanner: BluetoothLeScanner? = null
     private var bluetoothGatt: BluetoothGatt? = null
@@ -79,6 +86,13 @@ class AttendanceClient(context: Context) {
     fun start(newRequest: Request) {
         if (isBusy) return
         request = newRequest
+        rejectedTeachers.clear()
+        lastRejection = null
+        scan()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun scan() {
 
         // اگر بلوتوث خاموش باشد اسکنر null است
         bleScanner = bluetoothManager.adapter?.takeIf { it.isEnabled }?.bluetoothLeScanner
@@ -121,7 +135,7 @@ class AttendanceClient(context: Context) {
     private fun onScanTimeout() {
         stopScanningIfActive()
         if (!teacherFound) {
-            setState(State.Failed("گوشی استاد پیدا نشد؛ نزدیک‌تر شوید و دوباره تلاش کنید"))
+            setState(State.Failed(lastRejection ?: "گوشی استاد پیدا نشد؛ نزدیک‌تر شوید و دوباره تلاش کنید"))
         }
     }
 
@@ -227,7 +241,8 @@ class AttendanceClient(context: Context) {
                 val course = currentCourse
                 when (status) {
                     BluetoothGatt.GATT_SUCCESS -> {
-                        if (course != null) request?.onRegistered?.invoke(course)
+                        val teacherKey = currentTeacherKey
+                        if (course != null && teacherKey != null) request?.onRegistered?.invoke(course, teacherKey)
                         finishAttempt(State.Success(course?.name.orEmpty()))
                     }
                     BleConstants.STATUS_CONFLICT -> finishAttempt(
@@ -242,23 +257,45 @@ class AttendanceClient(context: Context) {
         }
     }
 
-    // پاسخ چالش = nonce (۱۶ بایت) + اثبات استاد (۱۶ بایت)
+    // پاسخ چالش: TeacherChallenge (nonce، اثبات HMAC، کلید عمومی و امضای استاد)
     private fun handleChallenge(gatt: BluetoothGatt, value: ByteArray, status: Int) {
         val req = request
-        val expectedSize = AttendanceCrypto.NONCE_SIZE + AttendanceCrypto.PROOF_SIZE
-        if (status != BluetoothGatt.GATT_SUCCESS || value.size != expectedSize || req == null) {
+        if (status != BluetoothGatt.GATT_SUCCESS || req == null) {
             handler.post { finishAttempt(State.Failed("خواندن چالش از گوشی استاد ناموفق بود")) }
             return
         }
+        val address = gatt.device.address
+        val challenge = TeacherChallenge.parse(value)
+        if (challenge == null) {
+            handler.post { rejectTeacher(address, "گوشی استاد امضای دیجیتال ندارد؛ برنامه استاد باید به‌روز شود") }
+            return
+        }
 
-        val nonce = value.copyOfRange(0, AttendanceCrypto.NONCE_SIZE)
-        val teacherProof = value.copyOfRange(AttendanceCrypto.NONCE_SIZE, value.size)
-
-        // درسی که کد کلاسش با اثبات استاد جور است؛ اگر هیچ‌کدام نبود، این گوشی استاد ما نیست
-        val course = req.courses.firstOrNull { AttendanceCrypto.verifyTeacherProof(it.classCode, nonce, teacherProof) }
+        // درسی که کد کلاسش با اثبات استاد جور است؛ اگر هیچ‌کدام نبود، این گوشی استاد ما نیست (مثلاً کلاس بغلی)
+        val course = req.courses.firstOrNull {
+            AttendanceCrypto.verifyTeacherProof(it.classCode, challenge.nonce, challenge.proof)
+        }
         if (course == null) {
-            Log.w(TAG, "اثبات استاد نامعتبر: ${gatt.device.address}")
-            handler.post { rejectTeacher(gatt.device.address) }
+            Log.w(TAG, "اثبات استاد نامعتبر: $address")
+            handler.post { rejectTeacher(address, null) }
+            return
+        }
+        // کد کلاس را هر هم‌کلاسی هم دارد؛ امضا نشان می‌دهد این همان گوشی استاد است
+        val teacherKey = TeacherSignature.encode(challenge.publicKey)
+        if (!challenge.verifySignature()) {
+            Log.w(TAG, "امضای استاد نامعتبر: $address")
+            handler.post { rejectTeacher(address, "امضای گوشی استاد «${course.name}» معتبر نیست") }
+            return
+        }
+        if (course.teacherKey != null && course.teacherKey != teacherKey) {
+            Log.w(TAG, "کلید استاد با کلید ثبت‌شده فرق دارد: $address")
+            handler.post {
+                rejectTeacher(
+                    address,
+                    "گوشی‌ای با کد کلاس «${course.name}» پیدا شد، ولی امضایش با گوشی استاد این درس یکی نیست. " +
+                        "اگر استاد گوشی‌اش را عوض کرده، درس را حذف و دوباره اضافه کنید."
+                )
+            }
             return
         }
         if (req.isRegisteredToday(course.id)) {
@@ -273,16 +310,18 @@ class AttendanceClient(context: Context) {
             return
         }
         currentCourse = course
+        currentTeacherKey = teacherKey
         handler.post { setState(State.Sending(course.name)) }
-        sendAttendanceData(gatt, characteristic, req.login, course, nonce)
+        sendAttendanceData(gatt, characteristic, req.login, course, challenge.nonce)
     }
 
     // این گوشی کنار گذاشته می‌شود و جستجو برای استاد درست ادامه پیدا می‌کند
-    private fun rejectTeacher(address: String) {
+    private fun rejectTeacher(address: String, reason: String?) {
         rejectedTeachers.add(address)
+        if (reason != null) lastRejection = reason
         disconnectGattServer()
         teacherFound = false
-        request?.let(::start)
+        if (request != null) scan()
     }
 
     @SuppressLint("MissingPermission")
@@ -315,6 +354,7 @@ class AttendanceClient(context: Context) {
     private fun finishAttempt(result: State) {
         teacherFound = false
         currentCourse = null
+        currentTeacherKey = null
         disconnectGattServer()
         setState(result)
     }

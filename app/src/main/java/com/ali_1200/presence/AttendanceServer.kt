@@ -86,7 +86,7 @@ class AttendanceServer(
             return
         }
 
-        session = ActiveSession(course, AttendanceVerifier(course.classCode))
+        session = ActiveSession(course, AttendanceVerifier(course.classCode, TeacherKeyStore(appContext).getOrCreate()))
         setState(State.Starting)
         advertiser?.startAdvertising(createAdvertiseSettings(), createAdvertiseData(), advertiseCallback)
     }

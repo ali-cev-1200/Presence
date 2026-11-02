@@ -33,6 +33,10 @@ class CourseRepository(context: Context) {
         courseDao.insertMyAttendance(MyAttendance(courseId = courseId, timestamp = now))
     }
 
+    suspend fun pinTeacherKey(courseId: Long, teacherKey: String) {
+        courseDao.pinTeacherKey(courseId, teacherKey)
+    }
+
     // درسی که استاد آخرین بار انتخاب کرده بود
     var selectedCourseId: Long
         get() = prefs.getLong("selected_course_id", 0)

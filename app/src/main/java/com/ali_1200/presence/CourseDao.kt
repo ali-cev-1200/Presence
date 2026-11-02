@@ -55,6 +55,10 @@ interface CourseDao {
         deleteCourseRow(courseId)
     }
 
+    // فقط بار اول؛ کلید ثبت‌شده با گوشی دیگری عوض نمی‌شود
+    @Query("UPDATE Course SET teacherKey = :teacherKey WHERE id = :courseId AND teacherKey IS NULL")
+    suspend fun pinTeacherKey(courseId: Long, teacherKey: String)
+
     @Insert
     suspend fun insertMyAttendance(attendance: MyAttendance)
 

@@ -73,10 +73,13 @@ class StudentViewModel(app: Application) : AndroidViewModel(app) {
                 login = user,
                 courses = courses.value.orEmpty(),
                 isRegisteredToday = ::isRegisteredToday,
-                onRegistered = { course ->
+                onRegistered = { course, teacherKey ->
                     val now = System.currentTimeMillis()
                     justRegistered = justRegistered + MyAttendance(courseId = course.id, timestamp = now)
-                    viewModelScope.launch { courseRepository.recordMyAttendance(course.id, now) }
+                    viewModelScope.launch {
+                        courseRepository.recordMyAttendance(course.id, now)
+                        courseRepository.pinTeacherKey(course.id, teacherKey)
+                    }
                 }
             )
         )

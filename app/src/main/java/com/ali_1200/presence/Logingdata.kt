@@ -14,11 +14,13 @@ data class Logingdata(
 )
 
 // یک درس: در گوشی استاد درس‌هایی که ساخته، در گوشی دانشجو درس‌هایی که با کد کلاس اضافه کرده
+// teacherKey فقط در گوشی دانشجو: کلید عمومی امضای استاد (base64) که در اولین ثبت حضور موفق ذخیره می‌شود
 @Entity(tableName = "Course")
 data class Course(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val classCode: String
+    val classCode: String,
+    val teacherKey: String? = null
 )
 
 // حضورهای دریافت‌شده در گوشی استاد

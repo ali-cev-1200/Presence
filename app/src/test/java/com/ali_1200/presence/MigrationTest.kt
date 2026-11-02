@@ -14,7 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
-// دیتابیس نسخه ۴ (همان SQL که Room برای نسخه ۴ ساخته بود) با Migration به نسخه ۵ برده می‌شود؛
+// دیتابیس نسخه ۴ (همان SQL که Room برای نسخه ۴ ساخته بود) با Migrationها به نسخه آخر برده می‌شود؛
 // Room بعد از Migration ساختار جدول‌ها را با Entityها مقایسه می‌کند و اگر فرق داشته باشد خطا می‌دهد
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34])
@@ -93,6 +93,12 @@ class MigrationTest {
                 assertEquals(5000L, it.getLong(1))
                 assertEquals(1, it.count)
             }
+
+            // نسخه ۶: کلید استاد هنوز ذخیره نشده؛ اولین بار ذخیره و بعد عوض نمی‌شود
+            assertEquals(null, db.courseDao.getCoursesOnce().single().teacherKey)
+            db.courseDao.pinTeacherKey(1, "first")
+            db.courseDao.pinTeacherKey(1, "second")
+            assertEquals("first", db.courseDao.getCoursesOnce().single().teacherKey)
         } finally {
             db.close()
         }

@@ -2,9 +2,10 @@ package com.ali_1200.presence
 
 import java.util.concurrent.ConcurrentHashMap
 
-// سمت استاد: به هر گوشی دانشجو یک nonce یک‌بارمصرف می‌دهد و اثبات دانشجو را با آن بررسی می‌کند
-class AttendanceVerifier(private val classCode: String) {
-    private class Challenge(val nonce: ByteArray, val issuedAt: Long)
+// سمت استاد: به هر گوشی دانشجو یک nonce یک‌بارمصرف (با اثبات HMAC و امضای استاد) می‌دهد
+// و اثبات دانشجو را با آن بررسی می‌کند
+class AttendanceVerifier(private val classCode: String, private val teacherKey: TeacherSignature.TeacherKey) {
+    private class Challenge(val nonce: ByteArray, val response: ByteArray, val issuedAt: Long)
 
     private val challenges = ConcurrentHashMap<String, Challenge>()
 
@@ -12,15 +13,16 @@ class AttendanceVerifier(private val classCode: String) {
         const val CHALLENGE_LIFETIME: Long = 60_000 // nonce فقط یک دقیقه معتبر است
     }
 
-    // پاسخ کامل خواندن چالش: nonce + اثبات استاد
-    // خواندن‌های تکه‌ای بعدی (offset > 0) باید همان چالش را بگیرند، نه یک nonce تازه
+    // پاسخ کامل خواندن چالش (TeacherChallenge)
+    // خواندن‌های تکه‌ای بعدی (offset > 0) باید همان بایت‌ها را بگیرند؛ امضای ECDSA هر بار فرق می‌کند
     fun challengeFor(address: String, offset: Int, now: Long): ByteArray? {
         val challenge = if (offset == 0) {
-            Challenge(AttendanceCrypto.newNonce(), now).also { challenges[address] = it }
+            val created = TeacherChallenge.create(classCode, teacherKey)
+            Challenge(created.nonce, created.toBytes(), now).also { challenges[address] = it }
         } else {
             challenges[address] ?: return null
         }
-        return challenge.nonce + AttendanceCrypto.teacherProof(classCode, challenge.nonce)
+        return challenge.response
     }
 
     fun verify(address: String, payload: AttendancePayload, now: Long): Boolean {

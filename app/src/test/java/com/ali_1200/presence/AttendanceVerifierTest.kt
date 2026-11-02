@@ -10,13 +10,16 @@ import org.junit.Test
 class AttendanceVerifierTest {
     private val code = "ABCDE23456"
     private val address = "AA:BB:CC:DD:EE:FF"
-    private val verifier = AttendanceVerifier(code)
+    private val teacherKey = TeacherSignature.generate()
+    private val verifier = AttendanceVerifier(code, teacherKey)
 
-    // کاری که گوشی دانشجو انجام می‌دهد: خواندن چالش، بررسی استاد، ساختن اثبات
-    private fun studentAnswers(challenge: ByteArray, classCode: String = code): AttendancePayload {
-        val nonce = challenge.copyOfRange(0, AttendanceCrypto.NONCE_SIZE)
-        val teacherProof = challenge.copyOfRange(AttendanceCrypto.NONCE_SIZE, challenge.size)
-        assertTrue(AttendanceCrypto.verifyTeacherProof(code, nonce, teacherProof))
+    // کاری که گوشی دانشجو انجام می‌دهد: خواندن چالش، بررسی استاد و امضایش، ساختن اثبات
+    private fun studentAnswers(bytes: ByteArray, classCode: String = code): AttendancePayload {
+        val challenge = TeacherChallenge.parse(bytes)!!
+        val nonce = challenge.nonce
+        assertTrue(AttendanceCrypto.verifyTeacherProof(code, nonce, challenge.proof))
+        assertTrue(challenge.verifySignature())
+        assertArrayEquals(teacherKey.publicKeyBytes, challenge.publicKey)
 
         val proof = AttendanceCrypto.studentProof(classCode, nonce, "علی رضایی", "40012345", "a1b2c3")
         return AttendancePayload("علی رضایی", "40012345", "a1b2c3", proof)
@@ -25,7 +28,8 @@ class AttendanceVerifierTest {
     @Test
     fun validAnswerIsAccepted() {
         val challenge = verifier.challengeFor(address, 0, 1_000)!!
-        assertEquals(AttendanceCrypto.NONCE_SIZE + AttendanceCrypto.PROOF_SIZE, challenge.size)
+        // باید با Long Read خوانده شود (بیشتر از MTU منهای ۱)
+        assertTrue(challenge.size > BleConstants.REQUESTED_MTU - 3)
         assertTrue(verifier.verify(address, studentAnswers(challenge), 2_000))
     }
 

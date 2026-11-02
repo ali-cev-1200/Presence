@@ -8,7 +8,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    version = 5,
+    version = 6,
     exportSchema = false,
     entities = [Logingdata::class, dateResponse::class, Student::class, Course::class, MyAttendance::class]
 )
@@ -84,7 +84,14 @@ abstract class MainDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATIONS = arrayOf(MIGRATION_3_4, MIGRATION_4_5)
+        // نسخه ۶: کلید عمومی استاد برای بررسی امضای گوشی استاد در گوشی دانشجو
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `Course` ADD COLUMN `teacherKey` TEXT")
+            }
+        }
+
+        val MIGRATIONS = arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
 
         fun getDatabase(context: Context): MainDatabase {
             return INSTANCE ?: synchronized(this) {
