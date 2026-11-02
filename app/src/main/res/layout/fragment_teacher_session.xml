@@ -45,7 +45,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:alpha="0.75"
-                            android:text="درس فعال"
+                            android:text="@string/teacher_session_text"
                             android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="@color/white" />
 
@@ -65,7 +65,7 @@
                         style="@style/Widget.Material3.Button.TonalButton.Icon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="تغییر"
+                        android:text="@string/teacher_session_btn_change_course"
                         android:textColor="@color/white"
                         app:backgroundTint="#33FFFFFF"
                         app:icon="@drawable/ic_expand_more"
@@ -88,7 +88,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:alpha="0.8"
-                        android:text="کد کلاس"
+                        android:text="@string/login_layout_class_code_hint"
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="@color/white" />
 
@@ -110,7 +110,7 @@
                         style="@style/Widget.Material3.Button.IconButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:contentDescription="کپی کد کلاس"
+                        android:contentDescription="@string/teacher_session_btn_copy_code_desc"
                         app:icon="@drawable/ic_copy"
                         app:iconTint="@color/white" />
                 </LinearLayout>
@@ -148,7 +148,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:text="حضور و غیاب متوقف است"
+                        android:text="@string/teacher_session_txt_status"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="@color/white" />
                 </LinearLayout>
@@ -158,7 +158,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="14dp"
-                    android:text="شروع حضور و غیاب"
+                    android:text="@string/teacher_session_btn_toggle"
                     android:textColor="?attr/colorPrimary"
                     app:backgroundTint="@color/white"
                     app:cornerRadius="16dp"
@@ -173,7 +173,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:layout_marginTop="8dp"
-                    android:text="نمایش QR به کلاس"
+                    android:text="@string/teacher_session_btn_show_qr"
                     android:textColor="@color/white"
                     android:visibility="gone"
                     app:cornerRadius="16dp"
@@ -220,14 +220,14 @@
                             android:id="@+id/txtPresentCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/teacher_report_txt_sessions"
                             android:textAppearance="@style/TextAppearance.Presence.StatNumber"
                             android:textColor="@color/success" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="حاضر"
+                            android:text="@string/teacher_session_text_2"
                             android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
@@ -251,14 +251,14 @@
                             android:id="@+id/txtAbsentCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/teacher_report_txt_sessions"
                             android:textAppearance="@style/TextAppearance.Presence.StatNumber"
                             android:textColor="@color/error" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="غایب"
+                            android:text="@string/teacher_session_text_3"
                             android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
@@ -281,14 +281,14 @@
                             android:id="@+id/txtTotalCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/teacher_report_txt_sessions"
                             android:textAppearance="@style/TextAppearance.Presence.StatNumber"
                             android:textColor="?attr/colorPrimary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="کل کلاس"
+                            android:text="@string/teacher_session_text_4"
                             android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
@@ -311,7 +311,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="حاضرین" />
+                    android:text="@string/teacher_session_btn_present" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAbsent"
@@ -319,7 +319,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="غایبین" />
+                    android:text="@string/teacher_session_btn_absent" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <TextView
@@ -407,7 +407,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="هنوز درسی نساخته‌اید"
+            android:text="@string/teacher_session_text_5"
             android:textAppearance="?attr/textAppearanceTitleLarge" />
 
         <TextView
@@ -415,7 +415,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:gravity="center"
-            android:text="برای هر درس یک کد کلاس ساخته می‌شود که به دانشجوها می‌دهید"
+            android:text="@string/teacher_session_text_6"
             android:textAppearance="?attr/textAppearanceBodyMedium"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -425,7 +425,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="ساختن درس"
+            android:text="@string/teacher_session_btn_create_course"
             app:icon="@drawable/ic_add" />
     </LinearLayout>
 </FrameLayout>

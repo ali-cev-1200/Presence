@@ -83,7 +83,7 @@
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:padding="0dp"
-                android:text="ثبت حضور"
+                android:text="@string/student_check_in_btn_check_in"
                 android:textAppearance="?attr/textAppearanceTitleLarge"
                 app:cornerRadius="85dp"
                 app:elevation="6dp"
@@ -128,14 +128,14 @@
                         android:id="@+id/txtStatusTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="آماده ثبت حضور"
+                        android:text="@string/student_check_in_txt_status_title"
                         android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                     <TextView
                         android:id="@+id/txtStatusBody"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="داخل کلاس دکمه بالا را بزنید"
+                        android:text="@string/student_check_in_txt_status_body"
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
                 </LinearLayout>
@@ -156,7 +156,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="امروز"
+            android:text="@string/student_check_in_text"
             android:textAppearance="?attr/textAppearanceTitleMedium" />
 
         <com.google.android.material.chip.ChipGroup
@@ -170,7 +170,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="هنوز درسی اضافه نکرده‌اید؛ از تب «درس‌های من» با کد کلاس اضافه کنید"
+            android:text="@string/student_check_in_txt_no_courses"
             android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:visibility="gone" />
@@ -194,7 +194,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:text="برای امنیت، قبل از ثبت اثر انگشت یا رمز گوشی خواسته می‌شود و ارتباط با گوشی استاد رمزنگاری شده است"
+                android:text="@string/student_check_in_text_2"
                 android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>

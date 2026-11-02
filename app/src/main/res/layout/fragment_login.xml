@@ -34,7 +34,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:text="حضور و غیاب"
+                android:text="@string/app_name"
                 android:textAppearance="?attr/textAppearanceHeadlineMedium"
                 android:textColor="@color/white" />
 
@@ -43,7 +43,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:alpha="0.85"
-                android:text="ثبت حضور سریع و امن با بلوتوث، بدون اینترنت"
+                android:text="@string/login_text"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="@color/white" />
         </LinearLayout>
@@ -62,14 +62,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="ورود"
+                    android:text="@string/login_text_2"
                     android:textAppearance="?attr/textAppearanceTitleLarge" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="نقش خود را انتخاب کنید"
+                    android:text="@string/login_text_3"
                     android:textAppearance="?attr/textAppearanceBodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -88,7 +88,7 @@
                         android:layout_width="0dp"
                         android:layout_height="52dp"
                         android:layout_weight="1"
-                        android:text="دانشجو"
+                        android:text="@string/login_btn_role_student"
                         app:icon="@drawable/ic_person" />
 
                     <com.google.android.material.button.MaterialButton
@@ -97,7 +97,7 @@
                         android:layout_width="0dp"
                         android:layout_height="52dp"
                         android:layout_weight="1"
-                        android:text="استاد"
+                        android:text="@string/login_btn_role_teacher"
                         app:icon="@drawable/ic_school" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -107,7 +107,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:hint="نام و نام خانوادگی"
+                    android:hint="@string/login_layout_name_hint"
                     app:startIconDrawable="@drawable/ic_person">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -124,7 +124,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:hint="کد دانشجویی"
+                    android:hint="@string/login_layout_student_id_hint"
                     app:startIconDrawable="@drawable/ic_badge">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -141,8 +141,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:hint="کد کلاس"
-                    app:helperText="کد ۱۰ حرفی که استاد داده، مثل ABCDE-FGHJK"
+                    android:hint="@string/login_layout_class_code_hint"
+                    app:helperText="@string/login_layout_class_code_helper"
                     app:startIconDrawable="@drawable/ic_lock">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -162,7 +162,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:hint="نام درس (اختیاری)"
+                    android:hint="@string/login_layout_course_name_hint"
                     app:startIconDrawable="@drawable/ic_school">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -178,7 +178,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="20dp"
-                    android:text="ورود"
+                    android:text="@string/login_text_2"
                     app:cornerRadius="16dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -188,7 +188,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="اطلاعات شما فقط روی همین گوشی ذخیره می‌شود"
+            android:text="@string/login_text_4"
             android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorOnSurfaceVariant" />
     </LinearLayout>

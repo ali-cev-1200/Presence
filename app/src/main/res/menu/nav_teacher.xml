@@ -4,13 +4,13 @@
     <item
         android:id="@+id/nav_session"
         android:icon="@drawable/ic_bluetooth"
-        android:title="حضور و غیاب" />
+        android:title="@string/app_name" />
     <item
         android:id="@+id/nav_courses"
         android:icon="@drawable/ic_school"
-        android:title="درس‌ها" />
+        android:title="@string/nav_teacher_nav_courses_title" />
     <item
         android:id="@+id/nav_report"
         android:icon="@drawable/ic_assessment"
-        android:title="گزارش" />
+        android:title="@string/nav_teacher_nav_report_title" />
 </menu>

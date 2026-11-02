@@ -4,9 +4,9 @@
     <item
         android:id="@+id/nav_check_in"
         android:icon="@drawable/ic_check_circle"
-        android:title="ثبت حضور" />
+        android:title="@string/student_check_in_btn_check_in" />
     <item
         android:id="@+id/nav_my_courses"
         android:icon="@drawable/ic_school"
-        android:title="درس‌های من" />
+        android:title="@string/nav_student_nav_my_courses_title" />
 </menu>

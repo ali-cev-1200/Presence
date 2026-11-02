@@ -59,14 +59,14 @@
                             android:id="@+id/txtSessions"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/teacher_report_txt_sessions"
                             android:textAppearance="@style/TextAppearance.Presence.StatNumber"
                             android:textColor="?attr/colorPrimary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="جلسه"
+                            android:text="@string/teacher_report_text"
                             android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
@@ -90,14 +90,14 @@
                             android:id="@+id/txtAverage"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0٪"
+                            android:text="@string/teacher_report_txt_average"
                             android:textAppearance="@style/TextAppearance.Presence.StatNumber"
                             android:textColor="@color/success" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="میانگین حضور"
+                            android:text="@string/teacher_report_text_2"
                             android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
@@ -120,14 +120,14 @@
                             android:id="@+id/txtAtRisk"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/teacher_report_txt_sessions"
                             android:textAppearance="@style/TextAppearance.Presence.StatNumber"
                             android:textColor="@color/error" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="در خطر حذف"
+                            android:text="@string/teacher_report_text_3"
                             android:textAppearance="?attr/textAppearanceBodySmall"
                             android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
@@ -156,7 +156,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="غیبت بیش از ۳ جلسه (۳/۱۶) قرمز و ۳ غیبت نارنجی نشان داده می‌شود"
+                    android:text="@string/teacher_report_text_4"
                     android:textAppearance="?attr/textAppearanceBodySmall"
                     android:textColor="@color/on_tertiary_container" />
             </LinearLayout>
@@ -166,7 +166,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="8dp"
-                android:text="وضعیت دانشجوها"
+                android:text="@string/teacher_report_text_5"
                 android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -181,7 +181,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:paddingTop="32dp"
-                android:text="هنوز جلسه‌ای برگزار نشده است"
+                android:text="@string/teacher_report_txt_empty"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:visibility="gone" />
@@ -194,6 +194,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:text="خروجی Excel"
+        android:text="@string/teacher_report_fab_export"
         app:icon="@drawable/ic_download" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

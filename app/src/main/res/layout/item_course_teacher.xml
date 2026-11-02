@@ -71,7 +71,7 @@
                 android:paddingTop="3dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="3dp"
-                android:text="درس فعال"
+                android:text="@string/teacher_session_text"
                 android:textAppearance="?attr/textAppearanceLabelMedium"
                 android:textColor="?attr/colorPrimary" />
         </LinearLayout>
@@ -91,7 +91,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="کد کلاس"
+                android:text="@string/login_layout_class_code_hint"
                 android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -114,7 +114,7 @@
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:contentDescription="کپی کد کلاس"
+                android:contentDescription="@string/teacher_session_btn_copy_code_desc"
                 app:icon="@drawable/ic_copy" />
         </LinearLayout>
 
@@ -129,7 +129,7 @@
                 style="@style/Widget.Material3.Button.TextButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="لیست کلاس"
+                android:text="@string/course_teacher_btn_roster"
                 app:icon="@drawable/ic_upload" />
 
             <com.google.android.material.button.MaterialButton
@@ -137,7 +137,7 @@
                 style="@style/Widget.Material3.Button.TextButton.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="نمایش کد"
+                android:text="@string/course_teacher_btn_show_code"
                 app:icon="@drawable/ic_people" />
 
             <Space
@@ -150,7 +150,7 @@
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:contentDescription="حذف درس"
+                android:contentDescription="@string/course_student_btn_delete_desc"
                 app:icon="@drawable/ic_delete"
                 app:iconTint="@color/error" />
         </LinearLayout>

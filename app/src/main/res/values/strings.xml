@@ -1,3 +1,56 @@
 <resources>
     <string name="app_name">حضور و غیاب</string>
+
+    <!-- متن‌های صفحه‌ها (layout و menu) -->
+    <string name="list_with_fab_fab">افزودن</string>
+    <string name="login_text">ثبت حضور سریع و امن با بلوتوث، بدون اینترنت</string>
+    <string name="login_text_2">ورود</string>
+    <string name="login_text_3">نقش خود را انتخاب کنید</string>
+    <string name="login_btn_role_student">دانشجو</string>
+    <string name="login_btn_role_teacher">استاد</string>
+    <string name="login_layout_name_hint">نام و نام خانوادگی</string>
+    <string name="login_layout_student_id_hint">کد دانشجویی</string>
+    <string name="login_layout_class_code_hint">کد کلاس</string>
+    <string name="login_layout_class_code_helper">کد ۱۰ حرفی که استاد داده، مثل ABCDE-FGHJK</string>
+    <string name="login_layout_course_name_hint">نام درس (اختیاری)</string>
+    <string name="login_text_4">اطلاعات شما فقط روی همین گوشی ذخیره می‌شود</string>
+    <string name="student_check_in_btn_check_in">ثبت حضور</string>
+    <string name="student_check_in_txt_status_title">آماده ثبت حضور</string>
+    <string name="student_check_in_txt_status_body">داخل کلاس دکمه بالا را بزنید</string>
+    <string name="student_check_in_text">امروز</string>
+    <string name="student_check_in_txt_no_courses">هنوز درسی اضافه نکرده‌اید؛ از تب «درس‌های من» با کد کلاس اضافه کنید</string>
+    <string name="student_check_in_text_2">برای امنیت، قبل از ثبت اثر انگشت یا رمز گوشی خواسته می‌شود و ارتباط با گوشی استاد رمزنگاری شده است</string>
+    <string name="teacher_report_txt_sessions">0</string>
+    <string name="teacher_report_text">جلسه</string>
+    <string name="teacher_report_txt_average">0٪</string>
+    <string name="teacher_report_text_2">میانگین حضور</string>
+    <string name="teacher_report_text_3">در خطر حذف</string>
+    <string name="teacher_report_text_4">غیبت بیش از ۳ جلسه (۳/۱۶) قرمز و ۳ غیبت نارنجی نشان داده می‌شود</string>
+    <string name="teacher_report_text_5">وضعیت دانشجوها</string>
+    <string name="teacher_report_txt_empty">هنوز جلسه‌ای برگزار نشده است</string>
+    <string name="teacher_report_fab_export">خروجی Excel</string>
+    <string name="teacher_session_text">درس فعال</string>
+    <string name="teacher_session_btn_change_course">تغییر</string>
+    <string name="teacher_session_btn_copy_code_desc">کپی کد کلاس</string>
+    <string name="teacher_session_txt_status">حضور و غیاب متوقف است</string>
+    <string name="teacher_session_btn_toggle">شروع حضور و غیاب</string>
+    <string name="teacher_session_btn_show_qr">نمایش QR به کلاس</string>
+    <string name="teacher_session_text_2">حاضر</string>
+    <string name="teacher_session_text_3">غایب</string>
+    <string name="teacher_session_text_4">کل کلاس</string>
+    <string name="teacher_session_btn_present">حاضرین</string>
+    <string name="teacher_session_btn_absent">غایبین</string>
+    <string name="teacher_session_text_5">هنوز درسی نساخته‌اید</string>
+    <string name="teacher_session_text_6">برای هر درس یک کد کلاس ساخته می‌شود که به دانشجوها می‌دهید</string>
+    <string name="teacher_session_btn_create_course">ساختن درس</string>
+    <string name="course_student_btn_delete_desc">حذف درس</string>
+    <string name="course_teacher_btn_roster">لیست کلاس</string>
+    <string name="course_teacher_btn_show_code">نمایش کد</string>
+    <string name="main_toolbar_action_backup_title">پشتیبان‌گیری از اطلاعات</string>
+    <string name="main_toolbar_action_restore_title">بازیابی از پشتیبان</string>
+    <string name="main_toolbar_action_about_title">درباره برنامه</string>
+    <string name="main_toolbar_action_reset_title">خروج و حذف اطلاعات</string>
+    <string name="nav_student_nav_my_courses_title">درس‌های من</string>
+    <string name="nav_teacher_nav_courses_title">درس‌ها</string>
+    <string name="nav_teacher_nav_report_title">گزارش</string>
 </resources>

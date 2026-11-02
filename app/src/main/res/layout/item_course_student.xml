@@ -108,7 +108,7 @@
             style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="حذف درس"
+            android:contentDescription="@string/course_student_btn_delete_desc"
             app:icon="@drawable/ic_delete"
             app:iconTint="?attr/colorOnSurfaceVariant" />
     </LinearLayout>
