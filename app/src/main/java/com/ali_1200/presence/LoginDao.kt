@@ -10,18 +10,9 @@ import androidx.room.Query
 interface LoginDao {
     // درج یا جایگزینی رکورد در صورت وجود تضاد (مثلاً اگر کاربر قبلاً لاگین کرده بود)
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertLoginData(data: Logingdata)
+    suspend fun insertLoginData(data: Logingdata)
 
     // دریافت آخرین داده‌های لاگین ذخیره شده (حداکثر ۱ رکورد)
     @Query("SELECT * FROM Login LIMIT 1")
-    fun getLoginData(): Logingdata?
-
-    @Query("UPDATE Login SET is_send = :value")
-    fun sendData(value :Boolean)
-
-    @Query("SELECT is_send FROM Login LIMIT 1")
-    fun getIsSentSync(): Boolean?
-
-    @Query("UPDATE Login SET timestamp = :value")
-    fun setTime(value :Long)
+    suspend fun getLoginData(): Logingdata?
 }
