@@ -5,22 +5,28 @@ import java.nio.charset.CharacterCodingException
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
 
-// خواندن لیست کلاس از فایل CSV (ذخیره‌شده از Excel)
+// خواندن لیست کلاس از فایل Excel (.xlsx) یا CSV
 // هر سطر: کد دانشجویی و نام، به هر ترتیبی؛ سطر عنوان و سطرهای بدون کد دانشجویی نادیده گرفته می‌شوند
 object RosterParser {
     private val SEPARATORS = charArrayOf(',', ';', '\t', '؛', '،')
 
-    fun parse(bytes: ByteArray): List<Student> = parse(decode(bytes))
+    // فایل xlsx خراب: XlsxReader.InvalidXlsxException
+    fun parse(bytes: ByteArray): List<Student> =
+        if (XlsxReader.isXlsx(bytes)) parseRows(XlsxReader.readFirstSheet(bytes)) else parse(decode(bytes))
 
     fun parse(text: String): List<Student> =
         text.removePrefix("\uFEFF")
             .lineSequence()
-            .mapNotNull(::parseLine)
-            .distinctBy { it.studentID } // اگر کدی دو بار آمده باشد، اولی می‌ماند
+            .map { it.split(*SEPARATORS) }
             .toList()
+            .let(::parseRows)
 
-    private fun parseLine(line: String): Student? {
-        val cells = line.split(*SEPARATORS)
+    fun parseRows(rows: List<List<String>>): List<Student> =
+        rows.mapNotNull(::parseCells)
+            .distinctBy { it.studentID } // اگر کدی دو بار آمده باشد، اولی می‌ماند
+
+    private fun parseCells(row: List<String>): Student? {
+        val cells = row
             .map { PersianDate.normalizeDigits(it.trim().trim('"').trim()) }
             .filter { it.isNotEmpty() }
 

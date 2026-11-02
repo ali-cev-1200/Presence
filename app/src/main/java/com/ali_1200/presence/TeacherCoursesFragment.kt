@@ -40,9 +40,12 @@ class TeacherCoursesFragment : Fragment(R.layout.fragment_list_with_fab) {
             onShowCode = ::showClassCodeDialog,
             onImportRoster = { course ->
                 importTarget = course
-                // نوع فایل CSV در گوشی‌های مختلف فرق می‌کند
+                // نوع فایل CSV در گوشی‌های مختلف فرق می‌کند؛ Excel هم مستقیم پذیرفته می‌شود
                 importRosterLauncher.launch(
-                    arrayOf("text/*", "application/csv", "application/vnd.ms-excel", "application/octet-stream")
+                    arrayOf(
+                        XlsxWriter.MIME_TYPE, "text/*", "application/csv", "application/vnd.ms-excel",
+                        "application/octet-stream"
+                    )
                 )
             },
             onDelete = { confirmDeleteCourse(vm, it) }
@@ -85,7 +88,7 @@ class TeacherCoursesFragment : Fragment(R.layout.fragment_list_with_fab) {
                 confirmDialog(
                     requireContext(),
                     "دانشجویی پیدا نشد",
-                    "فایل باید CSV با دو ستون کد دانشجویی و نام باشد.\nدر Excel از File ← Save As ← CSV UTF-8 استفاده کنید.",
+                    "فایل باید Excel (.xlsx) یا CSV با دو ستون کد دانشجویی و نام باشد. از فایل Excel، اولین برگه خوانده می‌شود.",
                     "باشه"
                 ) {}
                 return@launch

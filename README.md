@@ -11,7 +11,7 @@
 - چند درس، هر درس با **کد کلاس** جداگانه
 - شروع/توقف حضور و غیاب با یک دکمه
 - لیست **حاضرین** و **غایبین** امروز و خلاصه «حاضر: ۲۵ از ۳۰»
-- **وارد کردن لیست کلاس** از فایل CSV (ذخیره‌شده از Excel)
+- **وارد کردن لیست کلاس** مستقیم از فایل Excel (`.xlsx`) یا CSV
 - ثبت دستی حضور و حذف حضور اشتباه (با نگه داشتن انگشت روی هر نفر)
 - **خروجی Excel** (`.xlsx`) به‌صورت جدول دانشجو × جلسه، همراه با تعداد غیبت و هشدار غیبت بیش از ۳/۱۶
 - تاریخ شمسی
@@ -43,8 +43,8 @@
 
 ### فرمت فایل لیست کلاس
 
-یک فایل CSV با دو ستون کد دانشجویی و نام (به هر ترتیبی). سطر عنوان و ستون «ردیف» خودکار نادیده گرفته می‌شوند.
-در Excel: **File → Save As → CSV UTF-8**. فایل CSV معمولی Excel فارسی (کدگذاری 1256) هم خوانده می‌شود.
+فایل **Excel (`.xlsx`)** یا **CSV** با دو ستون کد دانشجویی و نام (به هر ترتیبی). از Excel اولین برگه خوانده می‌شود.
+سطر عنوان و ستون «ردیف» خودکار نادیده گرفته می‌شوند. فایل CSV با کدگذاری UTF-8 یا ویندوز فارسی (1256) هر دو خوانده می‌شوند.
 
 ```
 ردیف,کد دانشجویی,نام و نام خانوادگی
@@ -89,7 +89,7 @@
 | پروتکل و امنیت | `BleConstants`، `AttendanceCrypto`، `TeacherSignature`، `TeacherKeyStore`، `AttendanceVerifier`، `AttendancePayload` |
 | آمار | `AttendanceStats` |
 | دیتابیس (Room) | `MainDatabase`، `Logingdata` (Entityها)، `*Dao`، `*Repository` |
-| ورودی/خروجی | `RosterParser` (CSV)، `AttendanceExporter` و `XlsxWriter` (Excel)، `AttendanceBackup` و `BackupRepository` (پشتیبان JSON) |
+| ورودی/خروجی | `RosterParser` و `XlsxReader` (Excel و CSV)، `AttendanceExporter` و `XlsxWriter` (Excel)، `AttendanceBackup` و `BackupRepository` (پشتیبان JSON) |
 | ابزارها | `PersianDate` (تاریخ شمسی و اعداد فارسی)، `TimeUtils`، `InputDialog` |
 | تست‌ها | `app/src/test/...` |
 
