@@ -34,19 +34,20 @@ object TeacherSignature {
         return TeacherKey(encode(pair.private.encoded), encode(pair.public.encoded))
     }
 
-    // امضا روی nonce و اثبات HMAC همان چالش؛ پس امضا را نمی‌شود برای چالش دیگری به کار برد
-    fun sign(key: TeacherKey, nonce: ByteArray, proof: ByteArray): ByteArray =
+    // امضا روی بخش‌های چالش (nonce، اثبات HMAC و تنظیمات جلسه)؛ پس امضا را نمی‌شود برای چالش دیگری
+    // یا با تنظیمات دیگری به کار برد
+    fun sign(key: TeacherKey, vararg parts: ByteArray): ByteArray =
         Signature.getInstance(ALGORITHM).run {
             initSign(privateKey(key.privateKey))
-            signedData(nonce, proof).forEach(::update)
+            signedData(parts.toList()).forEach(::update)
             sign()
         }
 
-    fun verify(publicKey: ByteArray, nonce: ByteArray, proof: ByteArray, signature: ByteArray): Boolean =
+    fun verify(publicKey: ByteArray, signature: ByteArray, vararg parts: ByteArray): Boolean =
         runCatching {
             Signature.getInstance(ALGORITHM).run {
                 initVerify(publicKey(publicKey))
-                signedData(nonce, proof).forEach(::update)
+                signedData(parts.toList()).forEach(::update)
                 verify(signature)
             }
         }.getOrDefault(false) // کلید یا امضای خراب
@@ -63,15 +64,15 @@ object TeacherSignature {
 
     fun isValidKey(key: TeacherKey): Boolean = runCatching {
         val nonce = AttendanceCrypto.newNonce()
-        verify(key.publicKeyBytes, nonce, nonce, sign(key, nonce, nonce))
+        verify(key.publicKeyBytes, sign(key, nonce), nonce)
     }.getOrDefault(false)
 
     fun encode(bytes: ByteArray): String = Base64.getEncoder().encodeToString(bytes)
 
     fun decode(text: String): ByteArray = Base64.getDecoder().decode(text)
 
-    private fun signedData(nonce: ByteArray, proof: ByteArray): List<ByteArray> =
-        listOf(LABEL, nonce, proof).flatMap { listOf(ByteBuffer.allocate(4).putInt(it.size).array(), it) }
+    private fun signedData(parts: List<ByteArray>): List<ByteArray> =
+        (listOf(LABEL) + parts).flatMap { listOf(ByteBuffer.allocate(4).putInt(it.size).array(), it) }
 
     private fun privateKey(base64: String): PrivateKey =
         KeyFactory.getInstance("EC").generatePrivate(PKCS8EncodedKeySpec(decode(base64)))
@@ -81,25 +82,30 @@ object TeacherSignature {
 }
 
 // پاسخ خواندن چالش از گوشی استاد:
-// nonce (۱۶ بایت) | اثبات HMAC (۱۶ بایت) | طول کلید عمومی (۱ بایت) | کلید عمومی | امضا (باقی بایت‌ها)
+// nonce (۱۶) | اثبات HMAC (۱۶) | تنظیمات جلسه (۲) | طول کلید عمومی (۱) | کلید عمومی | امضا (باقی بایت‌ها)
 // حدود ۲۰۰ بایت است و از MTU بزرگ‌تر؛ برای همین دانشجو آن را با Long Read تکه‌تکه می‌خواند
 class TeacherChallenge(
     val nonce: ByteArray,
     val proof: ByteArray,
+    val policy: SessionPolicy,
     val publicKey: ByteArray,
     val signature: ByteArray
 ) {
-    fun toBytes(): ByteArray = nonce + proof + byteArrayOf(publicKey.size.toByte()) + publicKey + signature
+    fun toBytes(): ByteArray =
+        nonce + proof + policy.toBytes() + byteArrayOf(publicKey.size.toByte()) + publicKey + signature
 
-    fun verifySignature(): Boolean = TeacherSignature.verify(publicKey, nonce, proof, signature)
+    fun verifySignature(): Boolean =
+        TeacherSignature.verify(publicKey, signature, nonce, proof, policy.toBytes())
 
     companion object {
-        private const val HEADER = AttendanceCrypto.NONCE_SIZE + AttendanceCrypto.PROOF_SIZE
+        private const val PROOF_END = AttendanceCrypto.NONCE_SIZE + AttendanceCrypto.PROOF_SIZE
+        private const val HEADER = PROOF_END + SessionPolicy.SIZE
 
-        fun create(classCode: String, key: TeacherSignature.TeacherKey): TeacherChallenge {
+        fun create(classCode: String, key: TeacherSignature.TeacherKey, policy: SessionPolicy): TeacherChallenge {
             val nonce = AttendanceCrypto.newNonce()
             val proof = AttendanceCrypto.teacherProof(classCode, nonce)
-            return TeacherChallenge(nonce, proof, key.publicKeyBytes, TeacherSignature.sign(key, nonce, proof))
+            val signature = TeacherSignature.sign(key, nonce, proof, policy.toBytes())
+            return TeacherChallenge(nonce, proof, policy, key.publicKeyBytes, signature)
         }
 
         // اگر قالب درست نباشد (مثلاً نسخه قدیمی برنامه استاد بدون امضا) null
@@ -110,7 +116,8 @@ class TeacherChallenge(
             if (keySize == 0 || bytes.size <= keyEnd) return null
             return TeacherChallenge(
                 bytes.copyOfRange(0, AttendanceCrypto.NONCE_SIZE),
-                bytes.copyOfRange(AttendanceCrypto.NONCE_SIZE, HEADER),
+                bytes.copyOfRange(AttendanceCrypto.NONCE_SIZE, PROOF_END),
+                SessionPolicy.fromBytes(bytes.copyOfRange(PROOF_END, HEADER)),
                 bytes.copyOfRange(HEADER + 1, keyEnd),
                 bytes.copyOfRange(keyEnd, bytes.size)
             )

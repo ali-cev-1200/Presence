@@ -45,8 +45,8 @@ class AttendanceCryptoTest {
     @Test
     fun studentProofCoversEveryField() {
         val nonce = AttendanceCrypto.newNonce()
-        val proof = AttendanceCrypto.studentProof(code, nonce, "علی رضایی", "40012345", "a1b2c3")
-        val payload = AttendancePayload("علی رضایی", "40012345", "a1b2c3", proof)
+        val proof = AttendanceCrypto.studentProof(code, nonce, "علی رضایی", "40012345", "a1b2c3", -60)
+        val payload = AttendancePayload("علی رضایی", "40012345", "a1b2c3", proof, -60)
 
         assertTrue(AttendanceCrypto.verifyStudentProof(code, nonce, payload))
         assertFalse(AttendanceCrypto.verifyStudentProof(code, nonce, payload.copy(studentId = "40099999")))
@@ -59,8 +59,8 @@ class AttendanceCryptoTest {
     fun fieldBoundariesCannotBeShifted() {
         val nonce = AttendanceCrypto.newNonce()
         assertNotEquals(
-            AttendanceCrypto.studentProof(code, nonce, "ab", "c", "d"),
-            AttendanceCrypto.studentProof(code, nonce, "a", "bc", "d")
+            AttendanceCrypto.studentProof(code, nonce, "ab", "c", "d", -60),
+            AttendanceCrypto.studentProof(code, nonce, "a", "bc", "d", -60)
         )
     }
 }

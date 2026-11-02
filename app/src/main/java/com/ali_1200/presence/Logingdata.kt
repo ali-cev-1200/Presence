@@ -32,7 +32,8 @@ data class dateResponse(
     val deviceID: String,
     val timestamp: Long,
     val date :String?="",
-    val courseId: Long = 0
+    val courseId: Long = 0,
+    val rssi: Int? = null // قدرت سیگنال هنگام ثبت؛ برای ثبت دستی و حضورهای قدیمی null
 )
 
 // حضورهای موفق خود دانشجو (در گوشی دانشجو)؛ برای «امروز ثبت شده؟» و تعداد جلسات

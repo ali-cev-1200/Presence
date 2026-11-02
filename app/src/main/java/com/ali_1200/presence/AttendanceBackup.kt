@@ -39,6 +39,7 @@ object AttendanceBackup {
                                     .put("device", it.deviceID)
                                     .put("time", it.timestamp)
                                     .put("date", it.date.orEmpty())
+                                    .apply { it.rssi?.let { rssi -> put("rssi", rssi) } }
                             )
                         }
                     })
@@ -86,7 +87,8 @@ object AttendanceBackup {
                         name = it.getString("name"),
                         deviceID = it.getString("device"),
                         timestamp = it.getLong("time"),
-                        date = it.optString("date")
+                        date = it.optString("date"),
+                        rssi = if (it.has("rssi")) it.getInt("rssi") else null
                     )
                 }
                 CourseData(Course(name = name, classCode = code), students, records)

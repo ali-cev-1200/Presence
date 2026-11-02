@@ -19,4 +19,6 @@ object BleConstants {
     const val STATUS_CONFLICT = 0x80
     // کد کلاس اشتباه است یا nonce منقضی/تکراری است
     const val STATUS_AUTH_FAILED = 0x81
+    // سیگنال دانشجو ضعیف‌تر از محدوده‌ای است که استاد انتخاب کرده
+    const val STATUS_TOO_FAR = 0x82
 }

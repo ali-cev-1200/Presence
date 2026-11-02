@@ -165,6 +165,19 @@
                     app:icon="@drawable/ic_play"
                     app:iconGravity="textStart"
                     app:iconTint="?attr/colorPrimary" />
+
+                <!-- تنظیمات جلسه: محدوده کلاس (و QR) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSessionSettings"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/white"
+                    app:icon="@drawable/ic_tune"
+                    app:iconTint="@color/white"
+                    tools:text="محدوده کلاس: بدون محدودیت" />
             </LinearLayout>
 
             <!-- آمار امروز -->

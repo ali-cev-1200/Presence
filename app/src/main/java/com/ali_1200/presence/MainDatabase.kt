@@ -8,7 +8,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    version = 6,
+    version = 7,
     exportSchema = false,
     entities = [Logingdata::class, dateResponse::class, Student::class, Course::class, MyAttendance::class]
 )
@@ -91,7 +91,14 @@ abstract class MainDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATIONS = arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+        // نسخه ۷: قدرت سیگنال هر حضور (برای محدوده کلاس و نمایش به استاد)
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `Respons` ADD COLUMN `rssi` INTEGER")
+            }
+        }
+
+        val MIGRATIONS = arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
 
         fun getDatabase(context: Context): MainDatabase {
             return INSTANCE ?: synchronized(this) {

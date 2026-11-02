@@ -36,6 +36,7 @@ class AttendanceAdapter(
                 add(record.studentID)
                 add(relativeTime(record.timestamp))
                 if (ResponseRepository.isManual(record)) add("ثبت دستی")
+                record.rssi?.let { add(signalLabel(it)) }
                 if (rosterIds.isNotEmpty() && record.studentID !in rosterIds) add("خارج از لیست")
             }
             txtSubtitle.text = details.joinToString(" • ")

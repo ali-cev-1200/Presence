@@ -40,13 +40,24 @@ object AttendanceCrypto {
     fun verifyTeacherProof(classCode: String, nonce: ByteArray, proof: ByteArray): Boolean =
         MessageDigest.isEqual(teacherProof(classCode, nonce), proof)
 
-    fun studentProof(classCode: String, nonce: ByteArray, name: String, studentId: String, deviceId: String): String =
+    // rssi: قدرت سیگنالی که گوشی دانشجو از گوشی استاد اندازه گرفته؛ داخل اثبات است تا در مسیر عوض نشود
+    fun studentProof(
+        classCode: String,
+        nonce: ByteArray,
+        name: String,
+        studentId: String,
+        deviceId: String,
+        rssi: Int
+    ): String =
         Base64.getEncoder().encodeToString(
-            mac(classCode, STUDENT_LABEL, nonce, name.toByteArray(), studentId.toByteArray(), deviceId.toByteArray())
+            mac(
+                classCode, STUDENT_LABEL, nonce, name.toByteArray(), studentId.toByteArray(), deviceId.toByteArray(),
+                rssi.toString().toByteArray()
+            )
         )
 
     fun verifyStudentProof(classCode: String, nonce: ByteArray, payload: AttendancePayload): Boolean {
-        val expected = studentProof(classCode, nonce, payload.name, payload.studentId, payload.deviceId)
+        val expected = studentProof(classCode, nonce, payload.name, payload.studentId, payload.deviceId, payload.rssi)
         return MessageDigest.isEqual(expected.toByteArray(), payload.proof.toByteArray())
     }
 

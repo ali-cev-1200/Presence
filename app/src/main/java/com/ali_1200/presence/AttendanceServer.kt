@@ -86,7 +86,9 @@ class AttendanceServer(
             return
         }
 
-        session = ActiveSession(course, AttendanceVerifier(course.classCode, TeacherKeyStore(appContext).getOrCreate()))
+        session = ActiveSession(course, AttendanceVerifier(
+                course.classCode, TeacherKeyStore(appContext).getOrCreate(), SessionSettings(appContext)::policy
+            ))
         setState(State.Starting)
         advertiser?.startAdvertising(createAdvertiseSettings(), createAdvertiseData(), advertiseCallback)
     }
@@ -247,12 +249,15 @@ class AttendanceServer(
             return
         }
 
-        // کد کلاس اشتباه، nonce منقضی یا پیام تکراری (replay) ← رد می‌شود
-        if (!active.verifier.verify(device.address, payload, System.currentTimeMillis())) {
-            Log.w("AttendanceServer", "اثبات دانشجو نامعتبر است: ${payload.studentId}")
-            if (responseNeeded) {
-                gattServer?.sendResponse(device, requestId, BleConstants.STATUS_AUTH_FAILED, 0, null)
-            }
+        // کد کلاس اشتباه، nonce منقضی، پیام تکراری (replay) یا بیرون از محدوده کلاس ← رد می‌شود
+        val rejection = when (active.verifier.verify(device.address, payload, System.currentTimeMillis())) {
+            AttendanceVerifier.Result.ACCEPTED -> null
+            AttendanceVerifier.Result.AUTH_FAILED -> BleConstants.STATUS_AUTH_FAILED
+            AttendanceVerifier.Result.TOO_FAR -> BleConstants.STATUS_TOO_FAR
+        }
+        if (rejection != null) {
+            Log.w("AttendanceServer", "حضور ${payload.studentId} رد شد (کد $rejection)")
+            if (responseNeeded) gattServer?.sendResponse(device, requestId, rejection, 0, null)
             return
         }
 

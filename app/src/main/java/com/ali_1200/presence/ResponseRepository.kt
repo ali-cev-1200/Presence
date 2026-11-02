@@ -42,7 +42,7 @@ class ResponseRepository(context: Context) {
 
     // ثبت دستی توسط استاد (مثلاً گوشی دانشجو خاموش است)؛ اگر امروز حاضر بوده false
     suspend fun saveManual(courseId: Long, student: Student, now: Long): Boolean {
-        val payload = AttendancePayload(student.name, student.studentID, manualDeviceId(student.studentID), "")
+        val payload = AttendancePayload(student.name, student.studentID, manualDeviceId(student.studentID), "", rssi = 0)
         return saveAttendance(courseId, payload, now) == SaveResult.SAVED
     }
 
@@ -69,7 +69,9 @@ class ResponseRepository(context: Context) {
                 deviceID = payload.deviceId,
                 timestamp = now,
                 date = PersianDate.formatDateTime(now),
-                courseId = courseId
+                courseId = courseId,
+                // ثبت دستی سیگنالی ندارد
+                rssi = payload.rssi.takeIf { payload.deviceId != manualDeviceId(payload.studentId) }
             )
         )
         return SaveResult.SAVED

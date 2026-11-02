@@ -99,6 +99,9 @@ class MigrationTest {
             db.courseDao.pinTeacherKey(1, "first")
             db.courseDao.pinTeacherKey(1, "second")
             assertEquals("first", db.courseDao.getCoursesOnce().single().teacherKey)
+
+            // نسخه ۷: حضورهای قدیمی قدرت سیگنال ندارند
+            db.query("SELECT rssi FROM Respons", null).use { assertTrue(!it.moveToFirst() || it.isNull(0)) }
         } finally {
             db.close()
         }

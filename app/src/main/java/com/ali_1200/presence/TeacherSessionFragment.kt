@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ali_1200.presence.databinding.FragmentTeacherSessionBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -64,6 +65,8 @@ class TeacherSessionFragment : Fragment(R.layout.fragment_teacher_session) {
         binding.btnCreateCourse.setOnClickListener { showCreateCourse(vm) }
         binding.btnCopyCode.setOnClickListener { vm.selectedCourse.value?.let(::copyClassCode) }
         binding.txtClassCode.setOnClickListener { vm.selectedCourse.value?.let(::showClassCodeDialog) }
+        binding.btnSessionSettings.setOnClickListener { showSessionSettings() }
+        renderSessionSettings()
         binding.btnToggle.setOnClickListener {
             if (vm.server.isActive) vm.stopServer() else requestPermissionsAndStart()
         }
@@ -103,6 +106,28 @@ class TeacherSessionFragment : Fragment(R.layout.fragment_teacher_session) {
         requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         _binding = null
         super.onDestroyView()
+    }
+
+    private fun renderSessionSettings() {
+        binding.btnSessionSettings.text = "محدوده کلاس: ${SessionSettings(requireContext()).range.title}"
+    }
+
+    // محدوده با قدرت سیگنال؛ از دانشجوی بعدی اثر می‌کند، حتی وسط حضور و غیاب
+    private fun showSessionSettings() {
+        val settings = SessionSettings(requireContext())
+        val levels = RangeLevel.entries
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("محدوده کلاس")
+            .setSingleChoiceItems(levels.map { it.title }.toTypedArray(), levels.indexOf(settings.range)) { dialog, which ->
+                settings.range = levels[which]
+                renderSessionSettings()
+                dialog.dismiss()
+                if (levels[which].minRssi != null) {
+                    showMessage("دانشجوی دورتر از این محدوده ثبت نمی‌شود؛ فاصله‌ها تقریبی‌اند")
+                }
+            }
+            .setNegativeButton("بستن", null)
+            .show()
     }
 
     private fun missingBluetoothPermissions() = PermissionUtils.checkPermissions(

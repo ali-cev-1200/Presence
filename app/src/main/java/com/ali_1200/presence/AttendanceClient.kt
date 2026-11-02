@@ -68,6 +68,10 @@ class AttendanceClient(context: Context) {
     @Volatile
     private var currentTeacherKey: String? = null
 
+    // قدرت سیگنال گوشی استاد (قوی‌ترین اندازه‌گیری: هنگام اسکن و بعد از اتصال)
+    @Volatile
+    private var measuredRssi: Int = Int.MIN_VALUE
+
     // اگر هیچ استاد درستی پیدا نشد، دلیل رد آخرین گوشی به دانشجو گفته می‌شود
     @Volatile
     private var lastRejection: String? = null
@@ -147,7 +151,7 @@ class AttendanceClient(context: Context) {
                 it.uuid == BleConstants.SERVICE_UUID
             } == true
             if (hasService) {
-                handleTeacherBeaconFound(result.device)
+                handleTeacherBeaconFound(result.device, result.rssi)
             }
         }
 
@@ -160,8 +164,9 @@ class AttendanceClient(context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    private fun handleTeacherBeaconFound(device: BluetoothDevice) {
+    private fun handleTeacherBeaconFound(device: BluetoothDevice, rssi: Int) {
         teacherFound = true
+        measuredRssi = rssi
         handler.removeCallbacksAndMessages(null)
         stopScanningIfActive()
         setState(State.Connecting)
@@ -202,10 +207,13 @@ class AttendanceClient(context: Context) {
                 handler.post { finishAttempt(State.Failed("سرویس حضور روی گوشی استاد پیدا نشد")) }
                 return
             }
-            // قبل از ارسال، چالش استاد خوانده می‌شود
-            if (!gatt.readCharacteristic(challenge)) {
-                handler.post { finishAttempt(State.Failed("خواندن چالش از گوشی استاد ناموفق بود")) }
-            }
+            // یک اندازه‌گیری دیگر سیگنال روی همین اتصال، بعد خواندن چالش
+            if (!gatt.readRemoteRssi()) readChallenge(gatt)
+        }
+
+        override fun onReadRemoteRssi(gatt: BluetoothGatt, rssi: Int, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) measuredRssi = maxOf(measuredRssi, rssi)
+            readChallenge(gatt)
         }
 
         // اندروید ۱۳ به بعد
@@ -248,12 +256,22 @@ class AttendanceClient(context: Context) {
                     BleConstants.STATUS_CONFLICT -> finishAttempt(
                         State.Failed("این کد دانشجویی یا این گوشی امروز در این درس با مشخصات دیگری ثبت شده است")
                     )
+                    BleConstants.STATUS_TOO_FAR -> finishAttempt(State.Failed(tooFarMessage()))
                     BleConstants.STATUS_AUTH_FAILED -> finishAttempt(
                         State.Failed("استاد درخواست را نپذیرفت (کد کلاس اشتباه یا درخواست منقضی شده)")
                     )
                     else -> finishAttempt(State.Failed("ثبت حضور ناموفق بود (خطای $status)؛ دوباره تلاش کنید"))
                 }
             }
+        }
+    }
+
+    // قبل از ارسال، چالش استاد خوانده می‌شود
+    @SuppressLint("MissingPermission")
+    private fun readChallenge(gatt: BluetoothGatt) {
+        val challenge = gatt.getService(BleConstants.SERVICE_UUID)?.getCharacteristic(BleConstants.CHALLENGE_UUID)
+        if (challenge == null || !gatt.readCharacteristic(challenge)) {
+            handler.post { finishAttempt(State.Failed("خواندن چالش از گوشی استاد ناموفق بود")) }
         }
     }
 
@@ -298,6 +316,11 @@ class AttendanceClient(context: Context) {
             }
             return
         }
+        // محدوده‌ای که استاد انتخاب کرده (داخل چالش امضاشده)
+        if (!challenge.policy.allowsRssi(measuredRssi)) {
+            handler.post { finishAttempt(State.Failed(tooFarMessage())) }
+            return
+        }
         if (req.isRegisteredToday(course.id)) {
             handler.post { finishAttempt(State.Success(course.name, alreadyRegistered = true)) }
             return
@@ -333,8 +356,9 @@ class AttendanceClient(context: Context) {
         course: Course,
         nonce: ByteArray
     ) {
-        val proof = AttendanceCrypto.studentProof(course.classCode, nonce, login.name, login.studentID, login.deviceID)
-        val studentData = AttendancePayload(login.name, login.studentID, login.deviceID, proof).toBytes()
+        val rssi = measuredRssi
+        val proof = AttendanceCrypto.studentProof(course.classCode, nonce, login.name, login.studentID, login.deviceID, rssi)
+        val studentData = AttendancePayload(login.name, login.studentID, login.deviceID, proof, rssi).toBytes()
         val writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT // با تایید از طرف استاد
 
         val started = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -349,6 +373,9 @@ class AttendanceClient(context: Context) {
             handler.post { finishAttempt(State.Failed("ارسال داده ناموفق بود؛ دوباره تلاش کنید")) }
         }
     }
+
+    private fun tooFarMessage() =
+        "از گوشی استاد دور هستید (${signalLabel(measuredRssi)})؛ داخل کلاس و نزدیک‌تر بروید و دوباره بزنید"
 
     // پایان یک تلاش (موفق یا ناموفق): نمایش نتیجه و بستن اتصال
     private fun finishAttempt(result: State) {
