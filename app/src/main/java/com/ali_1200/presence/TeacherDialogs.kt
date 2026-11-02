@@ -1,12 +1,21 @@
 package com.ali_1200.presence
 
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RadioGroup
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.android.material.radiobutton.MaterialRadioButton
 
 // پنجره‌های مشترک صفحه‌های استاد
 
@@ -110,4 +119,130 @@ fun Fragment.confirmDeleteCourse(vm: TeacherViewModel, course: Course) {
         vm.deleteCourse(course)
         showMessage("درس «${course.name}» حذف شد")
     }
+}
+
+// تنظیمات جلسه: محدوده کلاس با قدرت سیگنال و QR چرخشی
+fun Fragment.showSessionSettingsDialog(settings: SessionSettings, onChanged: () -> Unit) {
+    val context = requireContext()
+    val density = resources.displayMetrics.density
+    val levels = RangeLevel.entries
+    val content = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+        val padding = (24 * density).toInt()
+        setPadding(padding, (8 * density).toInt(), padding, 0)
+    }
+    fun label(text: String, top: Int) = TextView(context).apply {
+        this.text = text
+        setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleSmall)
+        typeface = ResourcesCompat.getFont(context, R.font.shabnam_bold_fd)
+        setPadding(0, (top * density).toInt(), 0, (4 * density).toInt())
+    }
+    fun hint(text: String) = TextView(context).apply {
+        this.text = text
+        setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+        typeface = ResourcesCompat.getFont(context, R.font.shabnam_fd)
+        setTextColor(ContextCompat.getColor(context, R.color.on_surface_variant))
+    }
+
+    content.addView(label("محدوده کلاس", 0))
+    content.addView(hint("دانشجویی که سیگنالش از این محدوده ضعیف‌تر باشد ثبت نمی‌شود؛ فاصله‌ها تقریبی‌اند"))
+    val group = RadioGroup(context)
+    levels.forEachIndexed { index, level ->
+        group.addView(MaterialRadioButton(context).apply {
+            id = View.generateViewId()
+            text = level.title
+            typeface = ResourcesCompat.getFont(context, R.font.shabnam_fd)
+            isChecked = level == settings.range
+            tag = index
+        })
+    }
+    content.addView(group)
+
+    content.addView(label("QR چرخشی", 16))
+    content.addView(hint("دانشجو باید QR روی صفحه شما را هم اسکن کند؛ QR هر ۱۰ ثانیه عوض می‌شود، پس عکسش برای دوست بیرون کلاس به کار نمی‌آید"))
+    val qrSwitch = MaterialSwitch(context).apply {
+        text = "QR الزامی باشد"
+        typeface = ResourcesCompat.getFont(context, R.font.shabnam_fd)
+        isChecked = settings.qrRequired
+    }
+    content.addView(qrSwitch)
+
+    MaterialAlertDialogBuilder(context)
+        .setTitle("تنظیمات جلسه")
+        .setView(ScrollView(context).apply { addView(content) })
+        .setPositiveButton("ذخیره") { _, _ ->
+            val checked = group.findViewById<View>(group.checkedRadioButtonId)?.tag as? Int
+            if (checked != null) settings.range = levels[checked]
+            settings.qrRequired = qrSwitch.isChecked
+            onChanged()
+            showMessage("تنظیمات از دانشجوی بعدی اعمال می‌شود")
+        }
+        .setNegativeButton("انصراف", null)
+        .show()
+}
+
+// QR چرخشی تمام‌صفحه با شمارش معکوس تا QR بعدی؛ تا وقتی حضور و غیاب روشن است عوض می‌شود
+fun Fragment.showRotatingQr(vm: TeacherViewModel, course: Course) {
+    val context = requireContext()
+    val density = resources.displayMetrics.density
+    val teacherKey = TeacherKeyStore(context).getOrCreate()
+    val size = (minOf(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels) * 0.72).toInt()
+
+    val image = ImageView(context).apply {
+        layoutParams = LinearLayout.LayoutParams(size, size).apply { gravity = Gravity.CENTER_HORIZONTAL }
+        contentDescription = "QR حضور و غیاب"
+    }
+    val progress = LinearProgressIndicator(context).apply {
+        max = RotatingQr.PERIOD.toInt()
+        trackCornerRadius = (4 * density).toInt()
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            .apply { topMargin = (12 * density).toInt() }
+    }
+    val content = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+        val padding = (24 * density).toInt()
+        setPadding(padding, (8 * density).toInt(), padding, 0)
+        addView(image)
+        addView(progress)
+        addView(TextView(context).apply {
+            text = "دانشجوها بعد از زدن «ثبت حضور» این QR را اسکن می‌کنند. هر ۱۰ ثانیه عوض می‌شود."
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+            typeface = ResourcesCompat.getFont(context, R.font.shabnam_fd)
+            setTextColor(ContextCompat.getColor(context, R.color.on_surface_variant))
+            gravity = Gravity.CENTER
+            setPadding(0, (8 * density).toInt(), 0, 0)
+        })
+    }
+
+    val dialog = MaterialAlertDialogBuilder(context)
+        .setTitle("QR «${course.name}»")
+        .setView(content)
+        .setPositiveButton("بستن", null)
+        .create()
+
+    val handler = Handler(Looper.getMainLooper())
+    var shownPeriod = -1L
+    val tick = object : Runnable {
+        override fun run() {
+            if (!vm.server.isActive) {
+                dialog.dismiss()
+                return
+            }
+            val now = System.currentTimeMillis()
+            val period = RotatingQr.period(now)
+            if (period != shownPeriod) {
+                shownPeriod = period
+                image.setImageBitmap(RotatingQr.bitmap(RotatingQr.content(teacherKey, course.classCode, period), size))
+            }
+            progress.progress = (RotatingQr.PERIOD - now % RotatingQr.PERIOD).toInt()
+            handler.postDelayed(this, 100)
+        }
+    }
+    dialog.setOnShowListener {
+        // روشنایی کامل تا دوربین دانشجوها راحت‌تر بخواند
+        dialog.window?.attributes = dialog.window?.attributes?.apply { screenBrightness = 1f }
+        tick.run()
+    }
+    dialog.setOnDismissListener { handler.removeCallbacks(tick) }
+    dialog.show()
 }

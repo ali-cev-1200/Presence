@@ -11,7 +11,7 @@ class AttendanceVerifier(
 ) {
     private class Challenge(val nonce: ByteArray, val policy: SessionPolicy, val response: ByteArray, val issuedAt: Long)
 
-    enum class Result { ACCEPTED, AUTH_FAILED, TOO_FAR }
+    enum class Result { ACCEPTED, AUTH_FAILED, TOO_FAR, QR_INVALID }
 
     private val challenges = ConcurrentHashMap<String, Challenge>()
 
@@ -37,6 +37,9 @@ class AttendanceVerifier(
         if (!AttendanceCrypto.verifyStudentProof(classCode, challenge.nonce, payload)) return Result.AUTH_FAILED
         // گوشی دانشجو هم خودش بررسی می‌کند؛ این بررسی دوم برای برنامه دست‌کاری‌شده است
         if (!challenge.policy.allowsRssi(payload.rssi)) return Result.TOO_FAR
+        if (challenge.policy.qrRequired && !RotatingQr.verify(teacherKey, classCode, payload.qr, now)) {
+            return Result.QR_INVALID
+        }
         return Result.ACCEPTED
     }
 

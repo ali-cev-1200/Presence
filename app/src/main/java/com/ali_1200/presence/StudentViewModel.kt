@@ -69,13 +69,19 @@ class StudentViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun startCheckIn() {
+    // اسکنر QR برای همین درخواست باز شده؛ با چرخش صفحه دوباره باز نشود
+    var qrScanLaunched = false
+
+    // qrCode: در تلاش دوم، متن QR چرخشی که دانشجو اسکن کرده
+    fun startCheckIn(qrCode: String? = null) {
         val user = login.value ?: return
+        qrScanLaunched = false
         client.start(
             AttendanceClient.Request(
                 login = user,
                 courses = courses.value.orEmpty(),
                 isRegisteredToday = ::isRegisteredToday,
+                qrCode = qrCode,
                 onRegistered = { course, teacherKey ->
                     val now = System.currentTimeMillis()
                     justRegistered = justRegistered + MyAttendance(courseId = course.id, timestamp = now)

@@ -5,13 +5,14 @@ import org.json.JSONObject
 
 // داده‌ای که دانشجو برای استاد می‌فرستد؛ به‌صورت JSON تا نام‌های چندکلمه‌ای هم درست منتقل شوند
 // proof اثبات HMAC روی nonce استاد است (AttendanceCrypto.studentProof)
-// rssi قدرت سیگنال گوشی استاد از دید گوشی دانشجو (دسی‌بل-میلی‌وات)
+// rssi قدرت سیگنال گوشی استاد از دید گوشی دانشجو (دسی‌بل-میلی‌وات)؛ qr متن QR چرخشی اسکن‌شده (اگر لازم بوده)
 data class AttendancePayload(
     val name: String,
     val studentId: String,
     val deviceId: String,
     val proof: String,
-    val rssi: Int
+    val rssi: Int,
+    val qr: String = ""
 ) {
     fun toBytes(): ByteArray = JSONObject()
         .put("n", name)
@@ -19,6 +20,7 @@ data class AttendancePayload(
         .put("d", deviceId)
         .put("p", proof)
         .put("r", rssi)
+        .put("q", qr)
         .toString()
         .toByteArray(Charsets.UTF_8)
 
@@ -31,7 +33,8 @@ data class AttendancePayload(
                 json.getString("s").trim(),
                 json.getString("d").trim(),
                 json.getString("p").trim(),
-                json.getInt("r")
+                json.getInt("r"),
+                json.optString("q").trim()
             ).takeIf {
                 it.name.isNotEmpty() && it.studentId.isNotEmpty() && it.deviceId.isNotEmpty() && it.proof.isNotEmpty()
             }

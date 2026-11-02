@@ -18,11 +18,13 @@
 - **خروجی Excel** (`.xlsx`) به‌صورت جدول دانشجو × جلسه، همراه با تعداد غیبت و هشدار غیبت بیش از ۳/۱۶
 - تاریخ شمسی
 - **محدوده کلاس با قدرت سیگنال (RSSI):** «کلاس کوچک»، «کلاس معمولی» یا «بدون محدودیت»؛ دانشجوی دورتر ثبت نمی‌شود و در لیست حاضرین قدرت سیگنال هر نفر دیده می‌شود
+- **QR چرخشی (عامل دوم، اختیاری):** گوشی استاد QR نشان می‌دهد که هر ۱۰ ثانیه عوض می‌شود و دانشجو بعد از بلوتوث باید آن را اسکن کند؛ عکس QR برای دوست بیرون کلاس زود کهنه می‌شود
 - **ادامه حضور و غیاب در پس‌زمینه** (Foreground Service): با قفل شدن گوشی یا رفتن به برنامه دیگر قطع نمی‌شود؛ اعلان آن تعداد حاضرین امروز و دکمه «توقف» دارد
 - **پشتیبان‌گیری و بازیابی** همه درس‌ها، لیست‌ها و حضورها در یک فایل JSON (برای عوض کردن گوشی)؛ کد کلاس درس‌ها حفظ می‌شود
 
 **دانشجو**
 - اضافه کردن درس‌ها با کد کلاسی که استاد می‌دهد
+- **سابقه حضور** هر درس (با لمس کارت درس): تاریخ شمسی، روز هفته و ساعت هر جلسه
 - ثبت حضور با یک دکمه؛ برنامه خودش تشخیص می‌دهد گوشی استاد مال کدام درس است
 - تأیید هویت با اثر انگشت یا قفل صفحه قبل از ثبت
 - وضعیت امروز و تعداد جلسات حاضر برای هر درس
@@ -89,7 +91,7 @@
 | صفحه‌های استاد | `TeacherSessionFragment`، `TeacherCoursesFragment`، `TeacherReportFragment`، `TeacherViewModel` |
 | صفحه‌های دانشجو | `StudentCheckInFragment`، `StudentCoursesFragment`، `StudentViewModel`، `LoginFragment` |
 | بلوتوث | `AttendanceServer` (استاد)، `AttendanceService` (سرویس پیش‌زمینه استاد)، `AttendanceClient` (دانشجو) |
-| پروتکل و امنیت | `BleConstants`، `AttendanceCrypto`، `TeacherSignature`، `TeacherKeyStore`، `AttendanceVerifier`، `AttendancePayload` |
+| پروتکل و امنیت | `BleConstants`، `AttendanceCrypto`، `TeacherSignature`، `TeacherKeyStore`، `SessionPolicy`، `RotatingQr`، `AttendanceVerifier`، `AttendancePayload` |
 | آمار | `AttendanceStats` |
 | دیتابیس (Room) | `MainDatabase`، `Logingdata` (Entityها)، `*Dao`، `*Repository` |
 | ورودی/خروجی | `RosterParser` و `XlsxReader` (Excel و CSV)، `AttendanceExporter` و `XlsxWriter` (Excel)، `AttendanceBackup` و `BackupRepository` (پشتیبان JSON) |
@@ -100,4 +102,5 @@
 
 - فونت [شبنم](https://github.com/rastikerdar/shabnam-font) اثر صابر راستی‌کردار — SIL Open Font License 1.1
 - آیکون‌ها: Material Icons گوگل — Apache License 2.0
+- ساخت و اسکن QR: [ZXing](https://github.com/zxing/zxing) و [zxing-android-embedded](https://github.com/journeyapps/zxing-android-embedded) — Apache License 2.0 (کاملاً آفلاین)
 - آیکون برنامه: طراحی اختصاصی همین پروژه (وکتور؛ فایل [docs/icon/icon.svg](docs/icon/icon.svg) و سازنده آن `docs/icon/make_icon.py`)

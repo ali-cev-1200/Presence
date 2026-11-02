@@ -31,6 +31,8 @@ class AttendanceClient(context: Context) {
         object Connecting : State()
         data class Sending(val courseName: String) : State()
         data class Success(val courseName: String, val alreadyRegistered: Boolean = false) : State()
+        // استاد QR چرخشی خواسته؛ صفحه دانشجو اسکنر را باز می‌کند و دوباره با QR تلاش می‌کند
+        data class NeedsQr(val courseName: String) : State()
         data class Failed(val message: String) : State()
     }
 
@@ -39,6 +41,8 @@ class AttendanceClient(context: Context) {
         val login: Logingdata,
         val courses: List<Course>,
         val isRegisteredToday: (Long) -> Boolean,
+        // متن QR چرخشی اسکن‌شده؛ در تلاش اول null
+        val qrCode: String?,
         // کلید عمومی استاد (base64) برای ذخیره در اولین ثبت موفق
         val onRegistered: (Course, String) -> Unit
     )
@@ -257,6 +261,9 @@ class AttendanceClient(context: Context) {
                         State.Failed("این کد دانشجویی یا این گوشی امروز در این درس با مشخصات دیگری ثبت شده است")
                     )
                     BleConstants.STATUS_TOO_FAR -> finishAttempt(State.Failed(tooFarMessage()))
+                    BleConstants.STATUS_QR_INVALID -> finishAttempt(
+                        State.Failed("QR کهنه یا نامعتبر بود؛ دوباره «ثبت حضور» را بزنید و QR تازه را اسکن کنید")
+                    )
                     BleConstants.STATUS_AUTH_FAILED -> finishAttempt(
                         State.Failed("استاد درخواست را نپذیرفت (کد کلاس اشتباه یا درخواست منقضی شده)")
                     )
@@ -325,6 +332,10 @@ class AttendanceClient(context: Context) {
             handler.post { finishAttempt(State.Success(course.name, alreadyRegistered = true)) }
             return
         }
+        if (challenge.policy.qrRequired && req.qrCode == null) {
+            handler.post { finishAttempt(State.NeedsQr(course.name)) }
+            return
+        }
 
         val characteristic = gatt.getService(BleConstants.SERVICE_UUID)
             ?.getCharacteristic(BleConstants.CHARACTERISTIC_UUID)
@@ -357,8 +368,11 @@ class AttendanceClient(context: Context) {
         nonce: ByteArray
     ) {
         val rssi = measuredRssi
-        val proof = AttendanceCrypto.studentProof(course.classCode, nonce, login.name, login.studentID, login.deviceID, rssi)
-        val studentData = AttendancePayload(login.name, login.studentID, login.deviceID, proof, rssi).toBytes()
+        val qr = request?.qrCode.orEmpty()
+        val proof = AttendanceCrypto.studentProof(
+            course.classCode, nonce, login.name, login.studentID, login.deviceID, rssi, qr
+        )
+        val studentData = AttendancePayload(login.name, login.studentID, login.deviceID, proof, rssi, qr).toBytes()
         val writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT // با تایید از طرف استاد
 
         val started = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

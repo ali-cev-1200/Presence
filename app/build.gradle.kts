@@ -77,6 +77,10 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.10.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
 
+    // ساختن و اسکن QR چرخشی (بدون اینترنت و بدون سرویس گوگل)
+    implementation("com.google.zxing:core:3.4.1")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
     // تایید هویت با اثر انگشت یا قفل صفحه قبل از ثبت حضور
     implementation("androidx.biometric:biometric:1.1.0")
 

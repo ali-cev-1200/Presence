@@ -15,6 +15,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.ali_1200.presence.databinding.FragmentStudentCheckInBinding
 import com.google.android.material.chip.Chip
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 
 // دانشجو: دکمه بزرگ ثبت حضور، وضعیت تلاش فعلی و وضعیت امروز هر درس
 class StudentCheckInFragment : Fragment(R.layout.fragment_student_check_in) {
@@ -24,6 +26,23 @@ class StudentCheckInFragment : Fragment(R.layout.fragment_student_check_in) {
 
     private var pulse: ValueAnimator? = null
     private lateinit var biometricPrompt: BiometricPrompt
+
+    // اسکنر QR (کتابخانه zxing، کاملاً آفلاین)؛ مجوز دوربین را خودش می‌گیرد
+    private val qrScanner = registerForActivityResult(ScanContract()) { result ->
+        val text = result.contents
+        when {
+            text == null -> renderStatus(
+                "اسکن QR لغو شد", "برای ثبت حضور دوباره دکمه را بزنید",
+                R.drawable.ic_info, R.color.warning_container, R.color.warning
+            )
+            !RotatingQr.isValidFormat(text) -> renderStatus(
+                "QR اشتباه است", "QR حضور و غیاب روی گوشی استاد را اسکن کنید",
+                R.drawable.ic_warning, R.color.error_container, R.color.error
+            )
+            // هویت چند ثانیه پیش تایید شده؛ دوباره اثر انگشت خواسته نمی‌شود
+            else -> vm.startCheckIn(qrCode = text)
+        }
+    }
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -150,11 +169,31 @@ class StudentCheckInFragment : Fragment(R.layout.fragment_student_check_in) {
                 "درس «${state.courseName}» — ${PersianDate.formatTime(System.currentTimeMillis())}",
                 R.drawable.ic_check_circle, R.color.success_container, R.color.success
             )
+            is AttendanceClient.State.NeedsQr -> {
+                renderStatus(
+                    "اسکن QR لازم است", "QR روی گوشی استاد درس «${state.courseName}» را اسکن کنید",
+                    R.drawable.ic_qr, R.color.primary_container, R.color.primary
+                )
+                if (!vm.qrScanLaunched) {
+                    vm.qrScanLaunched = true
+                    launchQrScanner()
+                }
+            }
             is AttendanceClient.State.Failed -> renderStatus(
                 "ثبت نشد", state.message,
                 R.drawable.ic_warning, R.color.error_container, R.color.error
             )
         }
+    }
+
+    private fun launchQrScanner() {
+        qrScanner.launch(
+            ScanOptions()
+                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                .setPrompt("QR روی گوشی استاد را داخل کادر بگیرید")
+                .setBeepEnabled(false)
+                .setOrientationLocked(false)
+        )
     }
 
     private fun renderStatus(

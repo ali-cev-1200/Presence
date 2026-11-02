@@ -166,7 +166,23 @@
                     app:iconGravity="textStart"
                     app:iconTint="?attr/colorPrimary" />
 
-                <!-- تنظیمات جلسه: محدوده کلاس (و QR) -->
+                <!-- فقط وقتی حضور و غیاب روشن و QR چرخشی فعال است -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnShowQr"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:text="نمایش QR به کلاس"
+                    android:textColor="@color/white"
+                    android:visibility="gone"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_qr"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/white"
+                    app:strokeColor="#80FFFFFF" />
+
+                <!-- تنظیمات جلسه: محدوده کلاس و QR چرخشی -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSessionSettings"
                     style="@style/Widget.Material3.Button.TextButton"
@@ -177,7 +193,7 @@
                     android:textColor="@color/white"
                     app:icon="@drawable/ic_tune"
                     app:iconTint="@color/white"
-                    tools:text="محدوده کلاس: بدون محدودیت" />
+                    tools:text="محدوده: بدون محدودیت • QR: خاموش" />
             </LinearLayout>
 
             <!-- آمار امروز -->

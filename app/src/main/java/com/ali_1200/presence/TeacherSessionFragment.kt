@@ -17,7 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ali_1200.presence.databinding.FragmentTeacherSessionBinding
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -66,6 +65,7 @@ class TeacherSessionFragment : Fragment(R.layout.fragment_teacher_session) {
         binding.btnCopyCode.setOnClickListener { vm.selectedCourse.value?.let(::copyClassCode) }
         binding.txtClassCode.setOnClickListener { vm.selectedCourse.value?.let(::showClassCodeDialog) }
         binding.btnSessionSettings.setOnClickListener { showSessionSettings() }
+        binding.btnShowQr.setOnClickListener { vm.selectedCourse.value?.let { showRotatingQr(vm, it) } }
         renderSessionSettings()
         binding.btnToggle.setOnClickListener {
             if (vm.server.isActive) vm.stopServer() else requestPermissionsAndStart()
@@ -109,25 +109,18 @@ class TeacherSessionFragment : Fragment(R.layout.fragment_teacher_session) {
     }
 
     private fun renderSessionSettings() {
-        binding.btnSessionSettings.text = "محدوده کلاس: ${SessionSettings(requireContext()).range.title}"
+        binding.btnSessionSettings.text = SessionSettings(requireContext()).summary()
+        renderQrButton()
     }
 
-    // محدوده با قدرت سیگنال؛ از دانشجوی بعدی اثر می‌کند، حتی وسط حضور و غیاب
+    private fun renderQrButton() {
+        val visible = vm.server.state.value is AttendanceServer.State.Running && SessionSettings(requireContext()).qrRequired
+        binding.btnShowQr.visibility = if (visible) View.VISIBLE else View.GONE
+    }
+
+    // محدوده کلاس و QR چرخشی؛ از دانشجوی بعدی اثر می‌کند، حتی وسط حضور و غیاب
     private fun showSessionSettings() {
-        val settings = SessionSettings(requireContext())
-        val levels = RangeLevel.entries
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("محدوده کلاس")
-            .setSingleChoiceItems(levels.map { it.title }.toTypedArray(), levels.indexOf(settings.range)) { dialog, which ->
-                settings.range = levels[which]
-                renderSessionSettings()
-                dialog.dismiss()
-                if (levels[which].minRssi != null) {
-                    showMessage("دانشجوی دورتر از این محدوده ثبت نمی‌شود؛ فاصله‌ها تقریبی‌اند")
-                }
-            }
-            .setNegativeButton("بستن", null)
-            .show()
+        showSessionSettingsDialog(SessionSettings(requireContext())) { renderSessionSettings() }
     }
 
     private fun missingBluetoothPermissions() = PermissionUtils.checkPermissions(
@@ -189,6 +182,7 @@ class TeacherSessionFragment : Fragment(R.layout.fragment_teacher_session) {
             requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
         if (state is AttendanceServer.State.Failed) showMessage(state.message)
+        renderQrButton()
     }
 
     // آمار بالای صفحه، راهنمای لیست و حالت لیست خالی

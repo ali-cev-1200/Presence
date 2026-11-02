@@ -47,17 +47,20 @@ object AttendanceCrypto {
         name: String,
         studentId: String,
         deviceId: String,
-        rssi: Int
+        rssi: Int,
+        qr: String = ""
     ): String =
         Base64.getEncoder().encodeToString(
             mac(
                 classCode, STUDENT_LABEL, nonce, name.toByteArray(), studentId.toByteArray(), deviceId.toByteArray(),
-                rssi.toString().toByteArray()
+                rssi.toString().toByteArray(), qr.toByteArray()
             )
         )
 
     fun verifyStudentProof(classCode: String, nonce: ByteArray, payload: AttendancePayload): Boolean {
-        val expected = studentProof(classCode, nonce, payload.name, payload.studentId, payload.deviceId, payload.rssi)
+        val expected = studentProof(
+            classCode, nonce, payload.name, payload.studentId, payload.deviceId, payload.rssi, payload.qr
+        )
         return MessageDigest.isEqual(expected.toByteArray(), payload.proof.toByteArray())
     }
 

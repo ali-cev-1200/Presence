@@ -16,9 +16,9 @@ enum class RangeLevel(val title: String, val minRssi: Int?) {
 
 // تنظیمات جلسه که داخل چالش امضاشده به گوشی دانشجو می‌رسد؛ پس گوشی جعلی نمی‌تواند آن را عوض کند
 // قالب: پرچم‌ها (۱ بایت) | کمترین RSSI (۱ بایت، علامت‌دار)
-data class SessionPolicy(val minRssi: Int? = null) {
+data class SessionPolicy(val minRssi: Int? = null, val qrRequired: Boolean = false) {
     fun toBytes(): ByteArray = byteArrayOf(
-        (if (minRssi != null) FLAG_RSSI else 0).toByte(),
+        ((if (minRssi != null) FLAG_RSSI else 0) or (if (qrRequired) FLAG_QR else 0)).toByte(),
         (minRssi ?: 0).toByte()
     )
 
@@ -28,10 +28,14 @@ data class SessionPolicy(val minRssi: Int? = null) {
     companion object {
         const val SIZE = 2
         private const val FLAG_RSSI = 1
+        private const val FLAG_QR = 2
 
         fun fromBytes(bytes: ByteArray): SessionPolicy {
             val flags = bytes[0].toInt()
-            return SessionPolicy(minRssi = if (flags and FLAG_RSSI != 0) bytes[1].toInt() else null)
+            return SessionPolicy(
+                minRssi = if (flags and FLAG_RSSI != 0) bytes[1].toInt() else null,
+                qrRequired = flags and FLAG_QR != 0
+            )
         }
     }
 }
@@ -44,7 +48,14 @@ class SessionSettings(context: Context) {
         get() = RangeLevel.from(prefs.getString("session_range", null))
         set(value) = prefs.edit().putString("session_range", value.name).apply()
 
-    fun policy(): SessionPolicy = SessionPolicy(minRssi = range.minRssi)
+    // دانشجو علاوه بر بلوتوث باید QR چرخشی روی گوشی استاد را هم اسکن کند
+    var qrRequired: Boolean
+        get() = prefs.getBoolean("session_qr", false)
+        set(value) = prefs.edit().putBoolean("session_qr", value).apply()
+
+    fun policy(): SessionPolicy = SessionPolicy(minRssi = range.minRssi, qrRequired = qrRequired)
+
+    fun summary(): String = "محدوده: ${range.title.substringBefore(" (")} • QR: ${if (qrRequired) "روشن" else "خاموش"}"
 }
 
 // برچسب سیگنال برای لیست حاضرین استاد

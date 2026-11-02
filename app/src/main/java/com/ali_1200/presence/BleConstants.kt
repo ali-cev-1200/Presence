@@ -21,4 +21,6 @@ object BleConstants {
     const val STATUS_AUTH_FAILED = 0x81
     // سیگنال دانشجو ضعیف‌تر از محدوده‌ای است که استاد انتخاب کرده
     const val STATUS_TOO_FAR = 0x82
+    // QR چرخشی اسکن نشده، کهنه یا جعلی است
+    const val STATUS_QR_INVALID = 0x83
 }

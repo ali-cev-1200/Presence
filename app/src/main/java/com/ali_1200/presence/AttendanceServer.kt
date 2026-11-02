@@ -254,6 +254,7 @@ class AttendanceServer(
             AttendanceVerifier.Result.ACCEPTED -> null
             AttendanceVerifier.Result.AUTH_FAILED -> BleConstants.STATUS_AUTH_FAILED
             AttendanceVerifier.Result.TOO_FAR -> BleConstants.STATUS_TOO_FAR
+            AttendanceVerifier.Result.QR_INVALID -> BleConstants.STATUS_QR_INVALID
         }
         if (rejection != null) {
             Log.w("AttendanceServer", "حضور ${payload.studentId} رد شد (کد $rejection)")
