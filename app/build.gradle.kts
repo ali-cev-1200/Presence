@@ -48,6 +48,10 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
+    // اجرای تست دیتابیس (Migration) روی کامپیوتر بدون گوشی
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.test:core-ktx:1.6.1")
+    testImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
@@ -58,17 +62,21 @@ dependencies {
     kapt("androidx.room:room-compiler:2.6.1")
 
     // برای پشتیبانی از Coroutines در عملیات پایگاه داده Room
-    implementation("androidx.room:room-ktx:2.5.0")
+    implementation("androidx.room:room-ktx:2.6.1")
 
     // برای مدیریت چرخه حیات ViewModel در معماری MVVM
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     // برای استفاده از LiveData برای مدیریت داده‌های پویا و قابل مشاهده
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
     // برای مدیریت چرخه حیات در بخش‌های مختلف اپلیکیشن
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 
-//    // کتابخانه برای استفاده از تاریخ شمسی و تبدیل آن
-//    implementation("com.github.samanzamani:PersianDate:1.7.1")
+    // ViewModel مشترک بین Activity و صفحه‌ها (viewModels و activityViewModels)
+    implementation("androidx.activity:activity-ktx:1.10.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
+
+    // تایید هویت با اثر انگشت یا قفل صفحه قبل از ثبت حضور
+    implementation("androidx.biometric:biometric:1.1.0")
 
     // کتابخانه متریال دیزاین گوگل برای استفاده از کامپوننت‌ها و استایل‌های متریال
     implementation("com.google.android.material:material:1.12.0")
