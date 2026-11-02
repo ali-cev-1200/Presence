@@ -26,6 +26,8 @@
 
 **امنیت**
 - احراز هویت دوطرفه با **HMAC-SHA256** و چالش یک‌بارمصرف (nonce)
+- **امضای دیجیتال گوشی استاد** (ECDSA P-256): هم‌کلاسی‌ای که کد کلاس را دارد هم نمی‌تواند خودش را استاد جا بزند؛
+  گوشی دانشجو کلید استاد را در اولین حضور ذخیره می‌کند و اثر انگشت آن در کارت درس دیده می‌شود
 - رد پیام تکراری (replay)، کد کلاس اشتباه و گوشی استاد جعلی
 - هر دانشجو و هر گوشی فقط یک بار در روز برای هر درس
 
@@ -84,7 +86,7 @@
 | صفحه‌های استاد | `TeacherSessionFragment`، `TeacherCoursesFragment`، `TeacherReportFragment`، `TeacherViewModel` |
 | صفحه‌های دانشجو | `StudentCheckInFragment`، `StudentCoursesFragment`، `StudentViewModel`، `LoginFragment` |
 | بلوتوث | `AttendanceServer` (استاد)، `AttendanceService` (سرویس پیش‌زمینه استاد)، `AttendanceClient` (دانشجو) |
-| پروتکل و امنیت | `BleConstants`، `AttendanceCrypto`، `AttendanceVerifier`، `AttendancePayload` |
+| پروتکل و امنیت | `BleConstants`، `AttendanceCrypto`، `TeacherSignature`، `TeacherKeyStore`، `AttendanceVerifier`، `AttendancePayload` |
 | آمار | `AttendanceStats` |
 | دیتابیس (Room) | `MainDatabase`، `Logingdata` (Entityها)، `*Dao`، `*Repository` |
 | ورودی/خروجی | `RosterParser` (CSV)، `AttendanceExporter` و `XlsxWriter` (Excel)، `AttendanceBackup` و `BackupRepository` (پشتیبان JSON) |
