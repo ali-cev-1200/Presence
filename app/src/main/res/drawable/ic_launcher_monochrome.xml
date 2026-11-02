@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- آیکون برنامه (ساخته‌شده با docs/icon/make_icon.py): تیک حضور با امواج بلوتوث -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M53.34,34.38 A25.0,25.0 0 0,1 73.45,53.80"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M54.64,26.99 A32.5,32.5 0 0,1 80.79,52.24"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeAlpha="0.7" />
+    <path
+        android:pathData="M32.0,59.0 a17.0,17.0 0 1,0 34.0,0 a17.0,17.0 0 1,0 -34.0,0 z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M40.5,59.5 L46.5,65.5 L58.0,53.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

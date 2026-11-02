@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/icon/icon.svg" width="112" alt="آیکون برنامه"></p>
+
 # Presence — حضور و غیاب بدون اینترنت
 
 اپلیکیشن اندرویدی برای حضور و غیاب دانشجوها در کلاس با **بلوتوث کم‌مصرف (BLE)** و بدون نیاز به اینترنت یا سرور.
@@ -97,3 +99,4 @@
 
 - فونت [شبنم](https://github.com/rastikerdar/shabnam-font) اثر صابر راستی‌کردار — SIL Open Font License 1.1
 - آیکون‌ها: Material Icons گوگل — Apache License 2.0
+- آیکون برنامه: طراحی اختصاصی همین پروژه (وکتور؛ فایل [docs/icon/icon.svg](docs/icon/icon.svg) و سازنده آن `docs/icon/make_icon.py`)

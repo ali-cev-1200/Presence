@@ -202,6 +202,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAbout() {
         MaterialAlertDialogBuilder(this)
+            .setIcon(R.mipmap.ic_launcher)
             .setTitle("درباره برنامه")
             .setMessage(
                 "حضور و غیاب بدون اینترنت — نسخه ۱٫۰\n\n" +
