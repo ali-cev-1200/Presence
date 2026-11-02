@@ -10,12 +10,14 @@ class BackupRepository(context: Context) {
     private val appContext = context.applicationContext
     private val backupDao = MainDatabase.getDatabase(appContext).backupDao
     private val courseRepository = CourseRepository(appContext)
+    private val teacherKeyStore = TeacherKeyStore(appContext)
 
     suspend fun export(uri: Uri): Boolean {
         val courses = backupDao.courses().map {
             AttendanceBackup.CourseData(it, backupDao.students(it.id), backupDao.records(it.id))
         }
-        val text = AttendanceBackup.encode(courses, System.currentTimeMillis())
+        val backup = AttendanceBackup.Backup(courses, teacherKeyStore.getOrCreate())
+        val text = AttendanceBackup.encode(backup, System.currentTimeMillis())
         return withContext(Dispatchers.IO) {
             runCatching {
                 appContext.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) } != null
@@ -31,9 +33,11 @@ class BackupRepository(context: Context) {
             }.getOrNull()
         } ?: throw AttendanceBackup.InvalidBackupException("خواندن فایل ناموفق بود")
 
-        val courses = AttendanceBackup.decode(text)
-        if (courses.isEmpty()) throw AttendanceBackup.InvalidBackupException("در این فایل درسی نیست")
-        val ids = backupDao.replaceAll(courses)
+        val backup = AttendanceBackup.decode(text)
+        if (backup.courses.isEmpty()) throw AttendanceBackup.InvalidBackupException("در این فایل درسی نیست")
+        val ids = backupDao.replaceAll(backup.courses)
+        // گوشی جدید با همان امضای گوشی قبلی کار می‌کند و دانشجوها چیزی را عوض نمی‌کنند
+        backup.teacherKey?.let(teacherKeyStore::set)
         courseRepository.selectedCourseId = ids.first()
         return ids.size
     }

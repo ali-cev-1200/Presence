@@ -68,6 +68,15 @@ class StudentCourseAdapter(
         with(holder.binding) {
             txtCourseName.text = item.course.name
             txtSessions.text = "حاضر در ${item.attendedSessions} جلسه"
+            val teacherKey = item.course.teacherKey
+            if (teacherKey == null) {
+                txtTeacherKeyLabel.text = "امضای استاد در اولین حضور ذخیره می‌شود"
+                txtTeacherKey.visibility = View.GONE
+            } else {
+                txtTeacherKeyLabel.text = "امضای استاد:"
+                txtTeacherKey.text = TeacherSignature.fingerprint(teacherKey)
+                txtTeacherKey.visibility = View.VISIBLE
+            }
             if (item.registeredToday) {
                 txtStatus.bindBadge("امروز ثبت شد ✓", R.color.success_container, R.color.success)
             } else {

@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,9 +25,16 @@ class AttendanceBackupTest {
         AttendanceBackup.CourseData(Course(9, "فیزیک", "FGHJK78923"), emptyList(), emptyList())
     )
 
+    private val key = TeacherSignature.generate()
+
+    private fun backupText(teacherKey: TeacherSignature.TeacherKey? = key) =
+        AttendanceBackup.encode(AttendanceBackup.Backup(sample, teacherKey), 0)
+
     @Test
     fun encodeThenDecodeKeepsData() {
-        val decoded = AttendanceBackup.decode(AttendanceBackup.encode(sample, 0))
+        val backup = AttendanceBackup.decode(backupText())
+        assertEquals(key, backup.teacherKey)
+        val decoded = backup.courses
 
         assertEquals(listOf("ریاضی ۱", "فیزیک"), decoded.map { it.course.name })
         assertEquals(listOf("ABCDE23456", "FGHJK78923"), decoded.map { it.course.classCode })
@@ -42,8 +50,20 @@ class AttendanceBackupTest {
         assertThrows(AttendanceBackup.InvalidBackupException::class.java) { AttendanceBackup.decode("سلام") }
         assertThrows(AttendanceBackup.InvalidBackupException::class.java) { AttendanceBackup.decode("""{"a":1}""") }
         // کد کلاس خراب
-        val broken = AttendanceBackup.encode(sample, 0).replace("ABCDE23456", "ABC")
+        val broken = backupText().replace("ABCDE23456", "ABC")
         assertThrows(AttendanceBackup.InvalidBackupException::class.java) { AttendanceBackup.decode(broken) }
+        // کلید امضای خراب
+        val badKey = backupText(TeacherSignature.TeacherKey(TeacherSignature.generate().privateKey, key.publicKey))
+        assertThrows(AttendanceBackup.InvalidBackupException::class.java) { AttendanceBackup.decode(badKey) }
+    }
+
+    // فایل نسخه ۱ کلید امضا ندارد؛ کلید فعلی گوشی دست نمی‌خورد
+    @Test
+    fun backupWithoutKeyIsAccepted() {
+        val old = backupText(teacherKey = null).replace("\"version\": 2", "\"version\": 1")
+        val backup = AttendanceBackup.decode(old)
+        assertNull(backup.teacherKey)
+        assertEquals(2, backup.courses.size)
     }
 
     @Test
@@ -54,7 +74,7 @@ class AttendanceBackupTest {
             val oldId = db.courseDao.insertCourse(Course(name = "درس قدیمی", classCode = "QWERT23456"))
             db.studentDao.insertAll(listOf(Student("1", "قدیمی", oldId)))
 
-            val ids = db.backupDao.replaceAll(AttendanceBackup.decode(AttendanceBackup.encode(sample, 0)))
+            val ids = db.backupDao.replaceAll(AttendanceBackup.decode(backupText()).courses)
 
             assertEquals(listOf("ریاضی ۱", "فیزیک"), db.backupDao.courses().map { it.name })
             assertEquals(2, db.backupDao.students(ids[0]).size)

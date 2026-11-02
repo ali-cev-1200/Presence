@@ -72,6 +72,24 @@ fun Fragment.showClassCodeDialog(course: Course) {
             gravity = Gravity.CENTER
             setPadding(0, (12 * density).toInt(), 0, 0)
         })
+
+        // دانشجوها همین عدد را بعد از اولین حضور در کارت درسشان می‌بینند و می‌توانند مقایسه کنند
+        addView(TextView(context).apply {
+            text = "امضای این گوشی"
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelMedium)
+            typeface = androidx.core.content.res.ResourcesCompat.getFont(context, R.font.shabnam_family)
+            setTextColor(ContextCompat.getColor(context, R.color.on_surface_variant))
+            gravity = Gravity.CENTER
+            setPadding(0, (20 * density).toInt(), 0, 0)
+        })
+        addView(TextView(context).apply {
+            text = TeacherKeyStore(context).getOrCreate().fingerprint
+            typeface = android.graphics.Typeface.MONOSPACE
+            textSize = 16f
+            textDirection = View.TEXT_DIRECTION_LTR
+            setTextColor(ContextCompat.getColor(context, R.color.on_surface))
+            gravity = Gravity.CENTER
+        })
     }
 
     MaterialAlertDialogBuilder(context)
