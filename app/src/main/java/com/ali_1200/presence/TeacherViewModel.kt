@@ -11,14 +11,14 @@ import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
-// داده‌ها و کارهای مشترک همه صفحه‌های استاد؛ تا وقتی برنامه باز است زنده می‌ماند
-// (برای همین پخش بلوتوث با عوض کردن صفحه یا چرخاندن گوشی قطع نمی‌شود)
+// داده‌ها و کارهای مشترک همه صفحه‌های استاد؛ تا وقتی صفحه برنامه باز است زنده می‌ماند
+// پخش بلوتوث مال کل برنامه است (AttendanceServer.get) و با بسته شدن صفحه هم ادامه پیدا می‌کند
 class TeacherViewModel(app: Application) : AndroidViewModel(app) {
     private val courseRepository = CourseRepository(app)
     private val responseRepository = ResponseRepository(app)
     private val rosterRepository = RosterRepository(app)
 
-    val server = AttendanceServer(app, responseRepository, viewModelScope)
+    val server = AttendanceServer.get(app)
 
     // آمار خلاصه هر درس برای صفحه درس‌ها
     data class CourseSummary(val course: Course, val students: Int, val sessions: Int, val selected: Boolean)
@@ -139,7 +139,10 @@ class TeacherViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun startServer() {
-        selectedCourse.value?.let(server::start)
+        val course = selectedCourse.value ?: return
+        server.start(course)
+        // اگر بلوتوث خاموش بود start فوراً Failed می‌شود و سرویسی لازم نیست
+        if (server.isActive) AttendanceService.start(getApplication())
     }
 
     fun stopServer() {
@@ -151,8 +154,4 @@ class TeacherViewModel(app: Application) : AndroidViewModel(app) {
             rosterRepository.getStudentsOnce(course.id),
             responseRepository.getAllOnce(course.id)
         )
-
-    override fun onCleared() {
-        server.stop()
-    }
 }

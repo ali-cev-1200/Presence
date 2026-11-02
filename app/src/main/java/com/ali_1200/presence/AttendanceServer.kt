@@ -19,17 +19,31 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
 
 // سمت استاد: پخش سیگنال BLE و GATT Server که چالش می‌دهد و حضور دانشجوها را می‌گیرد
-// در TeacherViewModel نگه داشته می‌شود تا با عوض شدن صفحه‌ها قطع نشود
+// در کل برنامه یک نمونه دارد (get) تا با عوض شدن صفحه‌ها یا بسته شدن صفحه برنامه قطع نشود؛
+// AttendanceService هم تا وقتی روشن است برنامه را در پس‌زمینه زنده نگه می‌دارد
 class AttendanceServer(
     context: Context,
     private val responseRepository: ResponseRepository,
     private val scope: CoroutineScope
 ) {
+    companion object {
+        @Volatile
+        private var instance: AttendanceServer? = null
+
+        fun get(context: Context): AttendanceServer =
+            instance ?: synchronized(this) {
+                instance ?: context.applicationContext.let { app ->
+                    AttendanceServer(app, ResponseRepository(app), MainScope())
+                }.also { instance = it }
+            }
+    }
+
     sealed class State {
         object Stopped : State()
         object Starting : State()

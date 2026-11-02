@@ -1,7 +1,10 @@
 package com.ali_1200.presence
 
+import android.Manifest
 import android.animation.ValueAnimator
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
@@ -27,11 +30,14 @@ class TeacherSessionFragment : Fragment(R.layout.fragment_teacher_session) {
     private lateinit var absentAdapter: StudentAdapter
     private var showingAbsent = false
     private var pulse: ValueAnimator? = null
+    private var askedNotificationPermission = false
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        if (permissions.all { it.value }) vm.startServer() else showMessage("بدون مجوز بلوتوث نمی‌شود حضور و غیاب کرد")
+    ) {
+        // مجوز اعلان اختیاری است؛ فقط مجوزهای بلوتوث لازم‌اند
+        if (missingBluetoothPermissions().isEmpty()) vm.startServer()
+        else showMessage("بدون مجوز بلوتوث نمی‌شود حضور و غیاب کرد")
     }
 
     companion object {
@@ -99,10 +105,20 @@ class TeacherSessionFragment : Fragment(R.layout.fragment_teacher_session) {
         super.onDestroyView()
     }
 
+    private fun missingBluetoothPermissions() = PermissionUtils.checkPermissions(
+        requireContext(), PermissionUtils.getRequiredPermissions(isAdvertiser = true)
+    )
+
     private fun requestPermissionsAndStart() {
-        val missing = PermissionUtils.checkPermissions(
-            requireContext(), PermissionUtils.getRequiredPermissions(isAdvertiser = true)
-        )
+        val missing = missingBluetoothPermissions().toMutableList()
+        // اندروید ۱۳ به بعد: اعلان «حضور و غیاب در حال اجرا» با تعداد حاضرین و دکمه توقف
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !askedNotificationPermission &&
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            askedNotificationPermission = true
+            missing += Manifest.permission.POST_NOTIFICATIONS
+        }
         if (missing.isEmpty()) vm.startServer() else permissionLauncher.launch(missing.toTypedArray())
     }
 

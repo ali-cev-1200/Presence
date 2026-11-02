@@ -70,6 +70,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
     // برای مدیریت چرخه حیات در بخش‌های مختلف اپلیکیشن
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    // سرویس پس‌زمینه حضور و غیاب که LiveData را مشاهده می‌کند
+    implementation("androidx.lifecycle:lifecycle-service:2.8.7")
 
     // ViewModel مشترک بین Activity و صفحه‌ها (viewModels و activityViewModels)
     implementation("androidx.activity:activity-ktx:1.10.0")
