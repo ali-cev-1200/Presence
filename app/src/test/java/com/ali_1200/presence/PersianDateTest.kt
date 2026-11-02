@@ -19,6 +19,13 @@ class PersianDateTest {
     }
 
     @Test
+    fun formatsLongDateWithWeekday() {
+        // دوشنبه ۱۱ آبان ۱۴۰۵ = ۲ نوامبر ۲۰۲۶
+        val timestamp = java.util.Calendar.getInstance().apply { set(2026, 10, 2, 10, 32) }.timeInMillis
+        assertEquals("دوشنبه ۱۱ آبان ۱۴۰۵، ساعت ۱۰:۳۲", PersianDate.formatLong(timestamp))
+    }
+
+    @Test
     fun convertsDigitsBothWays() {
         assertEquals("۱۴۰۵/۰۸/۱۱", PersianDate.toPersianDigits("1405/08/11"))
         assertEquals("40012345", PersianDate.normalizeDigits("۴۰۰۱۲۳۴۵"))

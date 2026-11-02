@@ -18,6 +18,9 @@ object PersianDate {
         "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
     )
 
+    // به ترتیب Calendar.SUNDAY (۱) تا Calendar.SATURDAY (۷)
+    private val WEEKDAY_NAMES = listOf("یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه")
+
     private val GREGORIAN_DAYS_BEFORE_MONTH = intArrayOf(0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334)
 
     // الگوریتم رایج تبدیل میلادی به شمسی (بر پایه چرخه ۳۳ ساله)
@@ -52,6 +55,13 @@ object PersianDate {
     fun formatTime(timestamp: Long): String {
         val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
         return String.format(Locale.US, "%02d:%02d", calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE))
+    }
+
+    // مثل «سه‌شنبه ۱۱ آبان ۱۴۰۵، ساعت ۱۰:۳۲» برای نمایش
+    fun formatLong(timestamp: Long): String {
+        val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
+        val weekday = WEEKDAY_NAMES[calendar.get(Calendar.DAY_OF_WEEK) - 1]
+        return "$weekday ${fromTimestamp(timestamp).toLongText()}، ساعت ${toPersianDigits(formatTime(timestamp))}"
     }
 
     // مثل «1405/08/11 - 10:32» برای ذخیره و خروجی

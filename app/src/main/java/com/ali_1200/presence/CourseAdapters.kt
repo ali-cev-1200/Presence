@@ -51,6 +51,7 @@ class TeacherCourseAdapter(
 
 // کارت‌های درس دانشجو با وضعیت امروز و تعداد جلسات حاضر
 class StudentCourseAdapter(
+    private val onOpen: (MyCourseItem) -> Unit,
     private val onDelete: (Course) -> Unit
 ) : ListAdapter<MyCourseItem, StudentCourseAdapter.ViewHolder>(
     object : DiffUtil.ItemCallback<MyCourseItem>() {
@@ -67,7 +68,7 @@ class StudentCourseAdapter(
         val item = getItem(position)
         with(holder.binding) {
             txtCourseName.text = item.course.name
-            txtSessions.text = "حاضر در ${item.attendedSessions} جلسه"
+            txtSessions.text = "حاضر در ${item.attendedSessions} جلسه • لمس برای سابقه"
             val teacherKey = item.course.teacherKey
             if (teacherKey == null) {
                 txtTeacherKeyLabel.text = "امضای استاد در اولین حضور ذخیره می‌شود"
@@ -83,6 +84,7 @@ class StudentCourseAdapter(
                 txtStatus.bindBadge("امروز ثبت نشده", R.color.surface_variant, R.color.on_surface_variant)
             }
             btnDelete.setOnClickListener { onDelete(item.course) }
+            root.setOnClickListener { onOpen(item) }
         }
     }
 }

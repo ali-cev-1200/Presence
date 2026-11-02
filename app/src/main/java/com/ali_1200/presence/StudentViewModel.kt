@@ -8,12 +8,14 @@ import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
-// یک درس در صفحه دانشجو به همراه وضعیت امروز و تعداد جلسات حاضر
+// یک درس در صفحه دانشجو به همراه وضعیت امروز و سابقه حضور (زمان اولین ثبت هر روز، جدیدترین اول)
 data class MyCourseItem(
     val course: Course,
     val registeredToday: Boolean,
-    val attendedSessions: Int
-)
+    val history: List<Long>
+) {
+    val attendedSessions: Int get() = history.size
+}
 
 // داده‌ها و کارهای مشترک صفحه‌های دانشجو
 class StudentViewModel(app: Application) : AndroidViewModel(app) {
@@ -38,10 +40,11 @@ class StudentViewModel(app: Application) : AndroidViewModel(app) {
                 MyCourseItem(
                     course = course,
                     registeredToday = isRegisteredToday(course.id),
-                    attendedSessions = attendance.filter { it.courseId == course.id }
-                        .map { PersianDate.fromTimestamp(it.timestamp) }
-                        .distinct()
-                        .size
+                    history = attendance.filter { it.courseId == course.id }
+                        .sortedBy { it.timestamp }
+                        .distinctBy { PersianDate.fromTimestamp(it.timestamp) }
+                        .map { it.timestamp }
+                        .reversed()
                 )
             }
         }

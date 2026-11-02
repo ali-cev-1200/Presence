@@ -7,9 +7,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ali_1200.presence.databinding.FragmentListWithFabBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-// دانشجو: درس‌هایی که با کد کلاس اضافه کرده، همراه با وضعیت امروز و تعداد جلسات حاضر
+// دانشجو: درس‌هایی که با کد کلاس اضافه کرده، همراه با وضعیت امروز و تعداد جلسات حاضر؛ با لمس هر درس سابقه حضورش
 class StudentCoursesFragment : Fragment(R.layout.fragment_list_with_fab) {
     private val vm: StudentViewModel by activityViewModels()
     private var _binding: FragmentListWithFabBinding? = null
@@ -19,7 +20,7 @@ class StudentCoursesFragment : Fragment(R.layout.fragment_list_with_fab) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentListWithFabBinding.bind(view)
 
-        val adapter = StudentCourseAdapter(onDelete = { course ->
+        val adapter = StudentCourseAdapter(onOpen = ::showHistory, onDelete = { course ->
             confirmDialog(requireContext(), "حذف درس", "درس «${course.name}» از لیست شما حذف شود؟", "حذف") {
                 vm.deleteCourse(course)
                 showMessage("درس «${course.name}» حذف شد")
@@ -42,6 +43,21 @@ class StudentCoursesFragment : Fragment(R.layout.fragment_list_with_fab) {
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    // سابقه حضور یک درس: هر جلسه‌ای که حضور ثبت شده، با روز هفته و ساعت
+    private fun showHistory(item: MyCourseItem) {
+        val builder = MaterialAlertDialogBuilder(requireContext())
+            .setTitle("سابقه حضور «${item.course.name}»")
+            .setPositiveButton("بستن", null)
+        if (item.history.isEmpty()) {
+            builder.setMessage("هنوز حضوری در این درس ثبت نشده است.")
+        } else {
+            val count = PersianDate.toPersianDigits(item.history.size.toString())
+            builder.setTitle("سابقه حضور «${item.course.name}» ($count جلسه)")
+            builder.setItems(item.history.map { "✓  " + PersianDate.formatLong(it) }.toTypedArray(), null)
+        }
+        builder.show()
     }
 
     private fun showAddCourseDialog() {
